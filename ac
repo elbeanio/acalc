@@ -2,5 +2,4 @@
 import acalc
 
 if __name__ == "__main__":
-    ac = acalc.run()
-    ac.run()
+    acalc.run()

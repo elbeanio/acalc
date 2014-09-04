@@ -26,8 +26,3 @@ def do_calc(node):
             value = decimal.Decimal(item)
 
     return value
-
-
-if __name__ == "__main__":
-    print "1 + 1 =", do_calc([1, "+", 1])
-    print "5 + 4 + 3 + 2 + 1 - 10 =", do_calc([5, "+", 4, "+", 3, "+", 2, "+", 1, "-", 10])

@@ -1,5 +1,7 @@
 from command import CalcCmd
 
-r = CalcCmd()
-r.cmdloop()
+
+def run():
+    r = CalcCmd()
+    r.cmdloop()
 
