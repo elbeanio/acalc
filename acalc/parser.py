@@ -1,18 +1,32 @@
+from decimal import Decimal
 from pyparsing import *
+
+from debug import parse_action
 
 integer = Word(nums).setParseAction(lambda t: int(t[0]))
 variable = Word(alphas, exact=1)
-operand = integer | variable
+point = Literal(".")
+e = CaselessLiteral("E")
 
-expop = Literal('^')
-signop = oneOf('+ -')
-multop = oneOf('* /')
-plusop = oneOf('+ -')
-factop = Literal('!')
+
+@parse_action
+def number_parse(num="0"):
+    return Decimal("".join(num))
+
+
+decimal = Combine(Word("+-" + nums, nums) +
+                  Optional(point + Optional(Word(nums)))).setParseAction(number_parse)
+operand = decimal | integer | variable
+
+expop = Literal('^').setResultsName("EXPOP")
+signop = oneOf('+ -').setResultsName("SIGNOP")
+multop = oneOf('* /').setResultsName("MULTOP")
+plusop = oneOf('+ -').setResultsName("PLUSOP")
+factop = Literal('!').setResultsName("FACTOP")
 
 expr = operatorPrecedence(operand,
-                          [("!", 1, opAssoc.LEFT),
-                           ("^", 2, opAssoc.RIGHT),
+                          [(factop, 1, opAssoc.LEFT),
+                           (expop, 2, opAssoc.RIGHT),
                            (signop, 1, opAssoc.RIGHT),
                            (multop, 2, opAssoc.LEFT),
                            (plusop, 2, opAssoc.LEFT)]
