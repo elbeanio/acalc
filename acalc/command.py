@@ -7,6 +7,7 @@ from calculator import do_calc
 
 class CalcCmd(cmd.Cmd):
     calculations = []
+    state = ""
 
     @staticmethod
     def _quit():
@@ -17,7 +18,7 @@ class CalcCmd(cmd.Cmd):
         self.calculations.append(tree)
 
     def eval_calc(self, index=-1):
-        print reduce_tree(self.calculations[index], do_calc)
+        print reduce_tree(self.calculations[index], do_calc, self.calculations)
 
     def print_calc(self, index=-1):
         if index > -1:
