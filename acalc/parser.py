@@ -15,7 +15,7 @@ def number_parse(num="0"):
 
 
 decimal = Combine(Word("+-" + nums, nums) +
-                  Optional(point + Optional(Word(nums)))).setParseAction(number_parse)
+                  Optional(point + Optional(Word(nums)))).setParseAction(number_parse).setResultsName("NUMBER")
 operand = decimal | integer | variable
 
 expop = Literal('^').setResultsName("EXPOP")
@@ -24,13 +24,13 @@ multop = oneOf('* /').setResultsName("MULTOP")
 plusop = oneOf('+ -').setResultsName("PLUSOP")
 factop = Literal('!').setResultsName("FACTOP")
 
-expr = operatorPrecedence(operand,
-                          [(factop, 1, opAssoc.LEFT),
-                           (expop, 2, opAssoc.RIGHT),
-                           (signop, 1, opAssoc.RIGHT),
-                           (multop, 2, opAssoc.LEFT),
-                           (plusop, 2, opAssoc.LEFT)]
-                          )
+calc_expr = operatorPrecedence(operand,
+                               [(factop, 1, opAssoc.LEFT),
+                               (expop, 2, opAssoc.RIGHT),
+                               (signop, 1, opAssoc.RIGHT),
+                               (multop, 2, opAssoc.LEFT),
+                               (plusop, 2, opAssoc.LEFT)]
+                               )
 
 
 def is_sequence(arg):
@@ -50,5 +50,9 @@ def reduce_tree(tree, reducer):
     return reducer(new_tree)
 
 
-def parse_string(calc):
-    return expr.parseString(calc)
+def parse_calc_string(calc):
+    return calc_expr.parseString(calc)
+
+
+def parse_mod_string(mod):
+    return
