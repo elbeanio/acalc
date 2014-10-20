@@ -36,16 +36,15 @@ class CalcCmd(cmd.Cmd):
         self.eval_calc()
 
     def do_list(self, command):
+        """Lists all the calculations in the buffer"""
         for idx, calc in enumerate(self.calculations):
             self.print_calc(idx)
 
-    def do_set(self, command):
+    def do_rep(self, command):
+        """Replaces a value in a previous calculation with the new one"""
         print command
-
-    def do_q(self, command):
-        print command
-        self._quit()
 
     def do_quit(self, command):
+        """Quits so you can do something much more interesting"""
         print command
         self._quit()
