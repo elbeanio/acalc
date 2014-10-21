@@ -1,5 +1,5 @@
 from decimal import Decimal
-from pyparsing import *
+import pyparsing as pp
 
 from debug import parse_action
 
@@ -8,28 +8,28 @@ def number_parse(num="0"):
     return Decimal("".join(num))
 
 
-integer = Word(nums).setParseAction(lambda t: int(t[0]))
-expansion = Combine(Literal("\\") + Word(nums)).setResultsName("EXPANSION")
-point = Literal(".")
-e = CaselessLiteral("E")
-decimal = Combine(Word("+-" + nums, nums) +
-                  Optional(point + Optional(Word(nums)))).setParseAction(number_parse).setResultsName("NUMBER")
+integer = pp.Word(pp.nums).setParseAction(lambda t: int(t[0]))
+expansion = pp.Word("#" + pp.nums).setResultsName("EXPANSION")
+point = pp.Literal(".")
+e = pp.CaselessLiteral("E")
+decimal = pp.Combine(pp.Word("+-" + pp.nums, pp.nums) +
+                     pp.Optional(point + pp.Optional(pp.Word(pp.nums)))).setParseAction(number_parse).setResultsName("NUMBER")
 
-expop = Literal('^').setResultsName("EXPOP")
-signop = oneOf('+ -').setResultsName("SIGNOP")
-multop = oneOf('* /').setResultsName("MULTOP")
-plusop = oneOf('+ -').setResultsName("PLUSOP")
-factop = Literal('!').setResultsName("FACTOP")
+expop = pp.Literal('^').setResultsName("EXPOP")
+signop = pp.oneOf('+ -').setResultsName("SIGNOP")
+multop = pp.oneOf('* /').setResultsName("MULTOP")
+plusop = pp.oneOf('+ -').setResultsName("PLUSOP")
+factop = pp.Literal('!').setResultsName("FACTOP")
 
 operand = expansion | decimal | integer
 
-calc_expr = operatorPrecedence(operand,
-                               [(factop, 1, opAssoc.LEFT),
-                               (expop, 2, opAssoc.RIGHT),
-                               (signop, 1, opAssoc.RIGHT),
-                               (multop, 2, opAssoc.LEFT),
-                               (plusop, 2, opAssoc.LEFT)]
-                               )
+calc_expr = pp.operatorPrecedence(operand,
+                                  [(factop, 1, pp.opAssoc.LEFT),
+                                  (expop, 2, pp.opAssoc.RIGHT),
+                                  (signop, 1, pp.opAssoc.RIGHT),
+                                  (multop, 2, pp.opAssoc.LEFT),
+                                  (plusop, 2, pp.opAssoc.LEFT)]
+                                  )
 
 
 def is_sequence(arg):
@@ -43,8 +43,8 @@ def reduce_tree(tree, reducer, tree_list):
     for item in tree:
         if is_sequence(item):
             new_tree.append(reduce_tree(item, reducer, tree_list))
-        elif isinstance(item, basestring) and item.startswith("\\"):
-            number = int(item.replace("\\", ""))
+        elif isinstance(item, basestring) and item.startswith("#"):
+            number = int(item.replace("#", ""))
             new_tree.append(reduce_tree(tree_list[number], reducer, tree_list))
         else:
             new_tree.append(item)

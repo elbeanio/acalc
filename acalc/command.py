@@ -1,4 +1,5 @@
 import cmd
+from collections import deque
 import sys
 from parser import parse_calc_string, parse_mod_string, reduce_tree
 import pyparsing
@@ -6,7 +7,7 @@ from calculator import do_calc
 
 
 class CalcCmd(cmd.Cmd):
-    calculations = []
+    calculations = deque()
     state = ""
 
     @staticmethod
@@ -15,16 +16,22 @@ class CalcCmd(cmd.Cmd):
 
     def _add_calc_tree(self, ln):
         tree = parse_calc_string(ln)
-        self.calculations.append(tree)
+        self.calculations.appendleft(tree)
 
     def eval_calc(self, index=-1):
         print reduce_tree(self.calculations[index], do_calc, self.calculations)
 
     def print_calc(self, index=-1):
+        def format_calc(calc):
+            fmt = ""
+            for elm in calc:
+                fmt += str(elm)
+            return fmt
+
         if index > -1:
-            print index, self.calculations[index][0]
+            print index, ":", format_calc(self.calculations[index][0])
         else:
-            print self.calculations[index][0]
+            print format_calc(self.calculations[index][0])
 
     def default(self, ln):
         try:
