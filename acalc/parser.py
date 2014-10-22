@@ -44,7 +44,7 @@ def reduce_tree(tree, reducer, tree_list):
         if is_sequence(item):
             new_tree.append(reduce_tree(item, reducer, tree_list))
         elif isinstance(item, basestring) and item.startswith("#"):
-            number = int(item.replace("#", ""))
+            number = int(item.replace("#", "")) + 1
             new_tree.append(reduce_tree(tree_list[number], reducer, tree_list))
         else:
             new_tree.append(item)
