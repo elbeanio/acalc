@@ -9,17 +9,17 @@ def number_parse(num="0"):
 
 
 integer = pp.Word(pp.nums).setParseAction(lambda t: int(t[0]))
-expansion = pp.Word("#" + pp.nums).setResultsName("EXPANSION")
+expansion = pp.Word("#", pp.nums)
 point = pp.Literal(".")
 e = pp.CaselessLiteral("E")
 decimal = pp.Combine(pp.Word("+-" + pp.nums, pp.nums) +
-                     pp.Optional(point + pp.Optional(pp.Word(pp.nums)))).setParseAction(number_parse).setResultsName("NUMBER")
+                     pp.Optional(point + pp.Optional(pp.Word(pp.nums)))).setParseAction(number_parse)
 
-expop = pp.Literal('^').setResultsName("EXPOP")
-signop = pp.oneOf('+ -').setResultsName("SIGNOP")
-multop = pp.oneOf('* /').setResultsName("MULTOP")
-plusop = pp.oneOf('+ -').setResultsName("PLUSOP")
-factop = pp.Literal('!').setResultsName("FACTOP")
+expop = pp.Literal('^')
+signop = pp.oneOf('+ -')
+multop = pp.oneOf('* /')
+plusop = pp.oneOf('+ -')
+factop = pp.Literal('!')
 
 operand = expansion | decimal | integer
 

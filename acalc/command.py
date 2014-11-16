@@ -10,6 +10,8 @@ class CalcCmd(cmd.Cmd):
     calculations = deque()
     state = ""
 
+    prompt = "#> "
+
     @staticmethod
     def _quit():
         sys.exit(0)
@@ -26,13 +28,13 @@ class CalcCmd(cmd.Cmd):
             fmt = ""
             for elm in calc:
                 if is_sequence(elm):
-                    fmt += "(" + format_expr(elm) + ")"
+                    fmt += "(" + format_expr(elm) + ") "
                 else:
-                    fmt += str(elm)
+                    fmt += "{0} ".format(str(elm))
             return fmt
 
         if index > -1:
-            return "{0}: {1}".format(index, format_expr(self.calculations[index][0]))
+            return "#{0}: {1}".format(index, format_expr(self.calculations[index][0]))
         else:
             return format_expr(self.calculations[0][0])
 
@@ -42,7 +44,7 @@ class CalcCmd(cmd.Cmd):
         except pyparsing.ParseException:
             print "Don't understand that."
             return
-        print self.format_calc() + " = " + str(self.eval_calc())
+        print self.format_calc() + "= " + str(self.eval_calc())
 
     def do_list(self, command):
         """Lists all the calculations in the buffer"""
