@@ -1,0 +1,41 @@
+<html>
+<head>
+    <link href="css/main.css" rel="stylesheet">
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/2.1.4/jquery.min.js"></script>
+    <script type="text/javascript" src="lib/lodash.min.js"></script>
+    <script type="text/javascript" src="lib/pouchdb-4.0.0.min.js"></script>
+    <script type="text/javascript" src="js/textarea.js"></script>
+    <script type="text/javascript" src="js/parse.js"></script>
+    <script type="text/javascript" src="js/tokens.js"></script>
+    <script type="text/javascript" src="js/app.js"></script>
+</head>
+
+<body>
+<h1 class="title">A Calculator</h1>
+
+<div class="main">
+    <div class="container">
+        <div class="workspace">
+            <div class="calc_line" contenteditable="true"></div>
+        </div>
+        <div class="help_container">
+            <div class="help">
+                <p>Enter calculations in the box to the left</p>
+                <p>e.g.</p>
+                <ul>
+                    <li>1+2 =</li>
+                    <li>(5+4) / 3 =</li>
+                </ul>
+                <p>The = key runs the calculation</p>
+            </div>
+        </div>
+    </div>
+</div>
+</body>
+<script type="text/template" id="result_template">
+    <div id="tree-<%= id %>" class="result" data-id="<%= id %>">
+        <a href="#" class="answer"><%= answer %></a>
+        <a href="#" class="question"><%= question %></a>
+    </div>
+</script>
+</html>
