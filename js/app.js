@@ -1,3 +1,5 @@
+var TEMPLATES = {};
+
 var DATA = DATA || {
         lines: {
             "_id": "lines",
@@ -56,22 +58,48 @@ var ACALC = ACALC || {
             var answer = ACALC.run(tree);
             DATA.lines.data.push(question);
             return answer;
-        },
+        }
     };
 
 var UI = UI || {
+        setup: function(){
+            TEMPLATES = {
+                calc_line: _.template($('#calc_line_template').html())
+            }
+        },
         refresh: function(){
 
         },
-        recalculate_line: function(idx) {
-
+        recalculate_line: function($question) {
+            var question = $question.text();
+            var $tr = $question.parents("tr")
+            var q_value = false;
+            try {
+                q_value = ACALC.calculate_line(question);
+            }
+            catch (e) {
+                console.log(e);
+            }
+            finally {
+                if(q_value) {
+                    var $answer = $("td.answer", $tr);
+                    $answer.html(q_value);
+                }
+            }
         },
         new_line: function($current) {
-            $current.after('<div class="calc_line" contenteditable="true"></div>');
+            if($current.length > 0) {
+                var $tr = $current.parents("tr");
+                $tr.after(TEMPLATES.calc_line({}));
+            }
+            else {
+                $('#workspace').append(TEMPLATES.calc_line({}));
+            }
         },
         move_next: function($current) {
+            var $tr = $current.parents("tr");
             try {
-                var $next = $current.next("div.calc_line");
+                var $next = $("div.question", $tr.next("tr.calc_line"));
                 $next.focus();
             } catch(e) {
                 console.log(e);
@@ -81,40 +109,48 @@ var UI = UI || {
             }
         },
         move_prev: function($current) {
+            console.log("prev");
+            var $tr = $current.parents("tr");
             try {
-                $current.prev("div.calc_line").focus();
+                var $prev = $("div.question", $tr.prev("tr.calc_line"));
+                $prev.focus();
             } catch(e){
-
+                console.log(e);
             }
         }
     };
 
 
 $(function(){
-    $(".calc_line:last").focus();
+    UI.setup();
+    UI.new_line([]);
+    $(".calc_line .question:last").focus();
 
-    $(".workspace").on("keydown", ".calc_line", function(evt){
-        if(evt.keyCode == 187 && !evt.shiftKey) {
-            evt.preventDefault();
-            var $target = $(evt.target);
-            // get text on line
-            var question = $target.text();
-            var answer = ACALC.calculate_line(question);
-            $target.text(question + " = " + answer + "\n");
-            UI.new_line($target);
+    $("#workspace").on("keydown", ".calc_line", function(evt){
+        var $target = $(evt.target);
+        if(!evt.shiftKey) {
+            switch (evt.keyCode) {
+                case 13:
+                    evt.preventDefault();
+                    UI.new_line($target);
+                    UI.move_next($target);
+                    break;
+                case 40:
+                    evt.preventDefault();
+                    UI.move_next($target);
+                    break;
+                case 38:
+                    evt.preventDefault();
+                    UI.move_prev($target);
+                    break;
+            }
         }
-        if(evt.keyCode == 13 && !evt.shiftKey) {
-            evt.preventDefault();
-            UI.new_line($(evt.target));
-        }
-        if(evt.keyCode == 38 && !evt.shiftKey) {
-            evt.preventDefault();
-            UI.move_prev($(this));
+    });
 
-        }
-        if(evt.keyCode == 40 && !evt.shiftKey) {
-            evt.preventDefault();
-            UI.move_next($(this));
+    $("#workspace").on("keyup", ".calc_line", function(evt){
+        var $target = $(evt.target);
+        if(!evt.shiftKey) {
+            UI.recalculate_line($target, evt.value);
         }
     });
 });

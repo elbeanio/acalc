@@ -9,6 +9,20 @@ h1.title {
     padding: 10px;
 }
 
+#input {
+    font-family: arial, sans-serif;
+    font-size: 30px;
+    width: 100%;
+    height: 500px;
+    border: solid 2px blue;
+    overflow: auto;
+}
+
+#workspace {
+    width: 60%;
+    float: left;
+}
+
 .main {
     margin: 0 auto;
     width:900px;
@@ -18,11 +32,6 @@ h1.title {
     border: solid 2px black;
     overflow: auto;
     padding: 10px;
-}
-
-.workspace {
-    width: 60%;
-    float: left;
 }
 
 .help_container {
@@ -36,14 +45,29 @@ h1.title {
 }
 
 .calc_line {
-    border-bottom: dashed 1px grey;
+    height: 30px;
 }
 
-#input {
-    font-family: arial, sans-serif;
-    font-size: 30px;
+.calc_line .question {
+    border: solid 2px transparent;
+    border-bottom: dashed 2px grey;
     width: 100%;
-    height: 500px;
-    border: solid 2px blue;
-    overflow: auto;
+    height: 30px;
+    font-size: 25px;
+}
+
+.calc_line .question:focus {
+    outline: 0px solid transparent;
+    border: solid 2px grey;
+}
+
+.calc_line .equals {
+    width: 20px;
+    height: 30px;
+    text-align: center;
+}
+.calc_line .answer {
+    border: solid 2px black;
+    width:100px;
+    height:25px;
 }

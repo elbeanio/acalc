@@ -15,9 +15,8 @@
 
 <div class="main">
     <div class="container">
-        <div class="workspace">
-            <div class="calc_line" contenteditable="true"></div>
-        </div>
+        <table id="workspace">
+        </table>
         <div class="help_container">
             <div class="help">
                 <p>Enter calculations in the box to the left</p>
@@ -26,16 +25,17 @@
                     <li>1+2 =</li>
                     <li>(5+4) / 3 =</li>
                 </ul>
-                <p>The = key runs the calculation</p>
+                <p>Press enter to add a new calc, arrow keys to move between</p>
             </div>
         </div>
     </div>
 </div>
 </body>
-<script type="text/template" id="result_template">
-    <div id="tree-<%= id %>" class="result" data-id="<%= id %>">
-        <a href="#" class="answer"><%= answer %></a>
-        <a href="#" class="question"><%= question %></a>
-    </div>
+<script type="text/template" id="calc_line_template">
+    <tr class="calc_line">
+        <td><div class="question" contenteditable="true"></div></td>
+        <td class="equals"> = </td>
+        <td class="answer"></td>
+    </tr>
 </script>
 </html>
