@@ -54,10 +54,10 @@ String.prototype.tokens = function (prefix, suffix) {
 // If prefix and suffix strings are not provided, supply defaults.
 
     if (typeof prefix !== 'string') {
-        prefix = '<>+-&';
+        prefix = '+-&';
     }
     if (typeof suffix !== 'string') {
-        suffix = '=>&:';
+        suffix = '&:';
     }
 
 

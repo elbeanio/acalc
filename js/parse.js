@@ -5,13 +5,22 @@
 // Douglas Crockford
 // 2010-06-26
 
+// modified as a calculator
+// Ian George
+// 2015-09-01
+
+
+functions = {
+    'log': ["return Math.log(num);", ["num"]],
+    'test': ["alert(test);", ["test"]]
+};
+
 error = function (message, t) {
     t = t || this;
     t.name = "SyntaxError";
     t.message = message;
     throw t;
 };
-
 
 var make_parse = function () {
     var scope;
@@ -264,6 +273,11 @@ var make_parse = function () {
     symbol(",");
     symbol("else");
 
+    // html stuff
+    symbol("<");
+    symbol("</");
+    symbol(">");
+
     constant("true", true);
     constant("false", false);
     constant("null", null);
@@ -279,28 +293,12 @@ var make_parse = function () {
         return this;
     };
 
+    var s = symbol("log");
+    s.arity = "binary";
+    s.first = [{"value": "n", "arity": "name"}];
+    s.second = {"value": function(name){ console.log("L:", name)}, }
+
     assignment("=");
-    assignment("+=");
-    assignment("-=");
-
-    infix("?", 20, function (left) {
-        this.first = left;
-        this.second = expression(0);
-        advance(":");
-        this.third = expression(0);
-        this.arity = "ternary";
-        return this;
-    });
-
-    infixr("&&", 30);
-    infixr("||", 30);
-
-    infixr("===", 40);
-    infixr("!==", 40);
-    infixr("<", 40);
-    infixr("<=", 40);
-    infixr(">", 40);
-    infixr(">=", 40);
 
     infix("+", 50);
     infix("-", 50);
@@ -399,6 +397,46 @@ var make_parse = function () {
         advance("}");
         this.arity = "function";
         scope.pop();
+        return this;
+    });
+
+    prefix("<", function() {
+        this.name = token.value;
+        this.arity = "tag";
+        var data = {};
+        var last_key = "none";
+
+        advance();
+        while(true) {
+            // not worrying about self-closing tags for now
+            if (token.id !== ">"){
+                if (token.arity === "name"){
+                    data[token.value] = "";
+                    last_key = token.value;
+
+                } else if (token.arity === "literal") {
+                    data[last_key] = token.value;
+                    last_key = "none";
+                }
+                advance();
+            } else {
+                break;
+            }
+        }
+        this.first = data;
+        advance(">");
+
+        while(true){
+            if (token.id != "</") {
+                this.value = token.value;
+                advance();
+            } else {
+                break;
+            }
+        }
+        advance("</");
+        advance();
+        advance(">");
         return this;
     });
 
@@ -525,8 +563,10 @@ var make_parse = function () {
         return this;
     });
 
+    console.log("symbols: ", symbol_table);
+
     return function (source) {
-        tokens = source.tokens('=<>!+-*&|/%^', '=<>&|');
+        tokens = source.tokens('=!+-*&|/%^<', '=&|/');
         token_nr = 0;
         new_scope();
         advance();

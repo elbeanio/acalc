@@ -1,11 +1,12 @@
 var TEMPLATES = {};
+var DRAGGING = "";
 
 var DATA = DATA || {
         lines: {
             "_id": "lines",
-            "data": []
+            "data": {}
         },
-        db: new PouchDB('acalc_data'),
+        db: new PouchDB("acalc_data"),
         load_lines: function () {
             DATA.db.get("lines").then(function (doc) {
                 DATA.lines = doc;
@@ -36,27 +37,33 @@ var DATA = DATA || {
 var ACALC = ACALC || {
         parse: make_parse(),
         run: function (token) {
-            if (token.arity == "literal") {
-                return token.value
-            }
-            if (token.arity == "binary") {
-                switch (token.value) {
-                    case "+":
-                        return ACALC.run(token.first) + ACALC.run(token.second);
-                    case "-":
-                        return ACALC.run(token.first) - ACALC.run(token.second);
-                    case "*":
-                        return ACALC.run(token.first) * ACALC.run(token.second);
-                    case "/":
-                        return ACALC.run(token.first) / ACALC.run(token.second);
-                }
+            switch(token.arity){
+                case "literal":
+                    return token.value;
+                case "binary":
+                    switch (token.value) {
+                        case "+":
+                            return ACALC.run(token.first) + ACALC.run(token.second);
+                        case "-":
+                            return ACALC.run(token.first) - ACALC.run(token.second);
+                        case "*":
+                            return ACALC.run(token.first) * ACALC.run(token.second);
+                        case "/":
+                            return ACALC.run(token.first) / ACALC.run(token.second);
+                    }
+                case "tag":
+                    var id = token.first["href"].split("#")[1].split("_")[1];
+                    var tree = ACALC.parse($("#q_" + id).html());
+                    return ACALC.run(tree);
+                case "function":
+                    console.log(token);
             }
         },
-        calculate_line: function (question) {
+        calculate_line: function (id, question) {
             question = _.trim(question);
             var tree = ACALC.parse(question);
             var answer = ACALC.run(tree);
-            DATA.lines.data.push(question);
+            DATA.lines.data[id] = question;
             return answer;
         }
     };
@@ -64,25 +71,25 @@ var ACALC = ACALC || {
 var UI = UI || {
         setup: function(){
             TEMPLATES = {
-                calc_line: _.template($('#calc_line_template').html())
+                calc_line: _.template($("#calc_line_template").html())
             }
         },
         refresh: function(){
 
         },
         recalculate_line: function($question) {
-            var question = $question.text();
-            var $tr = $question.parents("tr")
+            var question = $question.html();
+            var $tr = $question.parents("tr");
             var q_value = false;
             try {
-                q_value = ACALC.calculate_line(question);
+                q_value = ACALC.calculate_line($tr.attr("id"), question);
             }
             catch (e) {
                 console.log(e);
             }
             finally {
                 if(q_value) {
-                    var $answer = $("td.answer", $tr);
+                    var $answer = $("td.answer a", $tr);
                     $answer.html(q_value);
                 }
             }
@@ -90,10 +97,10 @@ var UI = UI || {
         new_line: function($current) {
             if($current.length > 0) {
                 var $tr = $current.parents("tr");
-                $tr.after(TEMPLATES.calc_line({}));
+                $tr.after(TEMPLATES.calc_line({"stamp": Date.now()}));
             }
             else {
-                $('#workspace').append(TEMPLATES.calc_line({}));
+                $("#workspace").append(TEMPLATES.calc_line({"stamp": Date.now()}));
             }
         },
         move_next: function($current) {
@@ -109,7 +116,6 @@ var UI = UI || {
             }
         },
         move_prev: function($current) {
-            console.log("prev");
             var $tr = $current.parents("tr");
             try {
                 var $prev = $("div.question", $tr.prev("tr.calc_line"));
@@ -125,6 +131,9 @@ $(function(){
     UI.setup();
     UI.new_line([]);
     $(".calc_line .question:last").focus();
+    //TODO: Store the last focused line - use an event rather than peppering the app with calls to "set_line" or whatever
+    //TODO: Store the caret position!
+    //TODO: Allow the inserted result to be easily deleted
 
     $("#workspace").on("keydown", ".calc_line", function(evt){
         var $target = $(evt.target);
@@ -152,5 +161,23 @@ $(function(){
         if(!evt.shiftKey) {
             UI.recalculate_line($target, evt.value);
         }
+    });
+
+    $("#workspace").on("click", ".calc_line .answer a", function(evt){
+        evt.preventDefault();
+        return false;
+    });
+
+    $("#workspace").on("dragstart", ".calc_line .answer a", function(evt){
+        DRAGGING = $(evt.target).attr("id").split("_")[1];
+
+    })
+
+    $("#workspace").on("drop", ".question", function(evt){
+        var dropping = $(evt.target).attr("id").split("_")[1];
+        if (DRAGGING != dropping) {
+            return true;
+        }
+        evt.preventDefault();
     });
 });

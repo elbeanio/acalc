@@ -8,6 +8,11 @@
     <script type="text/javascript" src="js/parse.js"></script>
     <script type="text/javascript" src="js/tokens.js"></script>
     <script type="text/javascript" src="js/app.js"></script>
+    <script type="text/javascript">
+        if (!Date.now) {
+            Date.now = function() { return new Date().getTime(); }
+        }
+    </script>
 </head>
 
 <body>
@@ -32,10 +37,10 @@
 </div>
 </body>
 <script type="text/template" id="calc_line_template">
-    <tr class="calc_line">
-        <td><div class="question" contenteditable="true"></div></td>
+    <tr class="calc_line" id="<%= stamp %>">
+        <td><div id="q_<%= stamp %>" class="question" contenteditable="true"></div></td>
         <td class="equals"> = </td>
-        <td class="answer"></td>
+        <td class="answer"><a id="a_<%= stamp %>" href="#a_<%= stamp %>"></a></td>
     </tr>
 </script>
 </html>
