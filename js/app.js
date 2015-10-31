@@ -62,6 +62,7 @@ var ACALC = ACALC || {
         calculate_line: function (id, question) {
             question = _.trim(question);
             var tree = ACALC.parse(question);
+            console.log(tree);
             var answer = ACALC.run(tree);
             DATA.lines.data[id] = question;
             return answer;
@@ -79,6 +80,7 @@ var UI = UI || {
         },
         recalculate_line: function($question) {
             var question = $question.html();
+            console.log(question);
             var $tr = $question.parents("tr");
             var q_value = false;
             try {

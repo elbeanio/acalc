@@ -10,11 +10,6 @@
 // 2015-09-01
 
 
-functions = {
-    'log': ["return Math.log(num);", ["num"]],
-    'test': ["alert(test);", ["test"]]
-};
-
 error = function (message, t) {
     t = t || this;
     t.name = "SyntaxError";
@@ -293,11 +288,6 @@ var make_parse = function () {
         return this;
     };
 
-    var s = symbol("log");
-    s.arity = "binary";
-    s.first = [{"value": "n", "arity": "name"}];
-    s.second = {"value": function(name){ console.log("L:", name)}, }
-
     assignment("=");
 
     infix("+", 50);
@@ -563,12 +553,16 @@ var make_parse = function () {
         return this;
     });
 
-    console.log("symbols: ", symbol_table);
+    var add_symbols = function(){
+        var f = token()
+        scope.define()
+    }
 
     return function (source) {
         tokens = source.tokens('=!+-*&|/%^<', '=&|/');
         token_nr = 0;
         new_scope();
+        add_symbols();
         advance();
         var s = expression(0);
         advance("(end)");
