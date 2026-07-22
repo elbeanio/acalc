@@ -20,6 +20,8 @@ export const FUNCTIONS: Record<string, FunctionDef> = {
   cos: { minArgs: 1, maxArgs: 1, apply: ([x]) => x!.cos() },
   tan: { minArgs: 1, maxArgs: 1, apply: ([x]) => x!.tan() },
   sqrt: { minArgs: 1, maxArgs: 1, apply: ([x]) => x!.sqrt() },
+  cbrt: { minArgs: 1, maxArgs: 1, apply: ([x]) => nthRoot(x!, Num.of('3')) },
+  root: { minArgs: 2, maxArgs: 2, apply: ([x, n]) => nthRoot(x!, n!) },
   exp: { minArgs: 1, maxArgs: 1, apply: ([x]) => x!.exp() },
   ln: { minArgs: 1, maxArgs: 1, apply: ([x]) => x!.ln() },
   log: {
@@ -54,6 +56,19 @@ export function applyFunction(name: string, args: Num[]): Num {
     );
   }
   return def.apply(args);
+}
+
+/** nth root of x, i.e. x^(1/n). Handles the real root of a negative base. */
+function nthRoot(x: Num, n: Num): Num {
+  const reciprocal = Num.ONE.div(n);
+  if (x.isNegative()) {
+    const oddInteger = n.isInteger() && !n.mod(Num.of('2')).isZero();
+    if (!oddInteger) {
+      throw new EvalError('Even or non-integer root of a negative number');
+    }
+    return x.abs().pow(reciprocal).neg();
+  }
+  return x.pow(reciprocal);
 }
 
 function arityText(min: number, max: number | undefined): string {

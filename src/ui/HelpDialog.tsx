@@ -27,7 +27,8 @@ const SECTIONS: Section[] = [
     title: 'Functions',
     entries: [
       { syntax: 'sqrt(x)', meaning: 'square root', example: 'sqrt(16) = 4' },
-      { syntax: 'x ^ (1/n)', meaning: 'nth root (via a fractional power)', example: '27 ^ (1/3) = 3' },
+      { syntax: 'cbrt(x)', meaning: 'cube root', example: 'cbrt(27) = 3' },
+      { syntax: 'root(x, n)', meaning: 'nth root (also x ^ (1/n))', example: 'root(32, 5) = 2' },
       { syntax: 'sin, cos, tan', meaning: 'trigonometry (radians)', example: 'sin(pi / 2) = 1' },
       { syntax: 'ln(x)', meaning: 'natural log', example: 'ln(e) = 1' },
       { syntax: 'log(x)', meaning: 'log base 10', example: 'log(1000) = 3' },

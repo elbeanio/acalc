@@ -68,6 +68,14 @@ describe('evaluate: constants & functions', () => {
     expect(run('max(3, 1, 2)')).toBe('3');
     expect(run('2 * sqrt(16) + 1')).toBe('9');
   });
+
+  it('nth roots', () => {
+    expect(run('cbrt(27)')).toBe('3');
+    expect(run('cbrt(-8)')).toBe('-2'); // real cube root of a negative
+    expect(run('root(32, 5)')).toBe('2');
+    expect(run('root(16, 4)')).toBe('2');
+    expect(() => run('root(-16, 4)')).toThrow(/negative/); // even root of negative
+  });
 });
 
 describe('evaluate: references', () => {
