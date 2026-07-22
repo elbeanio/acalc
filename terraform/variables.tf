@@ -1,11 +1,11 @@
 variable "cloudflare_api_token" {
-  description = "Cloudflare API token with Zone, DNS, Pages and R2 edit permissions. Provide via TF_VAR_cloudflare_api_token or a gitignored *.tfvars — never commit."
+  description = "Cloudflare API token with Zone, DNS, Workers and R2 edit permissions. Provide via TF_VAR_cloudflare_api_token or a gitignored *.tfvars — never commit."
   type        = string
   sensitive   = true
 }
 
 variable "cloudflare_account_id" {
-  description = "Cloudflare account ID that owns the zone, Pages project and R2 bucket."
+  description = "Cloudflare account ID that owns the zone, Worker and R2 bucket."
   type        = string
 }
 
@@ -15,27 +15,10 @@ variable "domain" {
   default     = "acalc.io"
 }
 
-variable "pages_project_name" {
-  description = "Cloudflare Pages project name (also the *.pages.dev subdomain)."
+variable "worker_name" {
+  description = "Name of the Worker (built from git by Cloudflare Workers Builds) that the custom domains attach to."
   type        = string
   default     = "acalc"
-}
-
-variable "production_branch" {
-  description = "Git branch Pages treats as production."
-  type        = string
-  default     = "main"
-}
-
-variable "github_owner" {
-  description = "GitHub account/org that owns the repo connected to Pages."
-  type        = string
-}
-
-variable "github_repo" {
-  description = "GitHub repository name connected to Pages."
-  type        = string
-  default     = "acalc_ai"
 }
 
 variable "state_bucket_name" {
