@@ -6,6 +6,9 @@ export default defineConfig({
   // Relative base so the built static site works from any S3 bucket path.
   base: './',
   test: {
+    // jsdom unit/component tests live under src/. E2E specs (e2e/) run in a real
+    // browser via Playwright and are deliberately excluded here.
+    include: ['src/**/*.{test,spec}.{ts,tsx}'],
     environment: 'jsdom',
     setupFiles: ['./src/test/setup.ts'],
     css: false,

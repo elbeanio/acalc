@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useRef } from 'react';
+import { flushSync } from 'react-dom';
 import { computeStack } from '../engine/index.ts';
 import type { FocusRequest, Stack } from '../state/index.ts';
 import type {
@@ -44,8 +45,10 @@ export function StackView({ stack, focusRequest }: StackViewProps) {
 
   const addBelow = (index: number) => {
     const newId = stack.nextRowId; // insertRowAt will assign this id
-    store.insertRowAt(stack.id, index + 1);
-    focusRowSoon(newId);
+    // flushSync so the new row is mounted and its editor handle registered
+    // before we focus — synchronous, so fast typing after Enter can't race it.
+    flushSync(() => store.insertRowAt(stack.id, index + 1));
+    focusRow(newId);
   };
 
   /** Reference options for a row's `$` autocomplete: every other row's value. */

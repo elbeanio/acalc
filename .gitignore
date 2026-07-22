@@ -5,3 +5,7 @@ dist-ssr
 .DS_Store
 *.log
 coverage
+test-results
+playwright-report
+blob-report
+playwright/.cache
