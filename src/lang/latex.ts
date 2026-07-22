@@ -71,11 +71,13 @@ function renderInner(node: Node): string {
     case 'identifier':
       return CONSTANTS[node.name] ?? `\\mathrm{${escapeText(node.name)}}`;
 
-    case 'ref': {
-      const label =
-        node.target.kind === 'id' ? `$${node.target.id}` : `$${node.target.name}`;
-      return `\\text{${escapeText(label)}}`;
-    }
+    case 'ref':
+      // Drop the `$`; style references so they read as substitutions. Numeric
+      // ids get a pill (so "1" isn't read as a literal); names read as an
+      // italic variable. Classes are styled in CSS; needs KaTeX `trust`.
+      return node.target.kind === 'id'
+        ? `\\htmlClass{acalc-ref}{${node.target.id}}`
+        : `\\htmlClass{acalc-var}{\\mathit{${escapeText(node.target.name)}}}`;
 
     case 'unary':
       return `${node.op === '-' ? '-' : '+'}${render(node.operand, PREC.unary)}`;

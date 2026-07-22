@@ -308,6 +308,52 @@ test('deleting the only row shows the empty state', async ({ page }) => {
   await expect(rows(page)).toHaveCount(1);
 });
 
+test('reformats the expression on blur', async ({ page }) => {
+  await typeInRow(page, 0, '4*(4+4)');
+  await page.keyboard.press('Enter'); // blur row 0 → reformat
+  await editRow(page, 0); // re-open the editor
+  await expect(activeEditor(page)).toHaveText('4 * (4 + 4)');
+});
+
+test('shows an = between the expression and the result', async ({ page }) => {
+  await typeInRow(page, 0, '2 + 2');
+  await expect(rowLoc(page, 0).locator('.row-eq')).toHaveText('=');
+});
+
+test('copies the full-precision value', async ({ page, context }) => {
+  await context.grantPermissions(['clipboard-read', 'clipboard-write']);
+  await typeInRow(page, 0, '2 / 3');
+  await expect(result(page, 0)).toHaveText('0.666666666667'); // 12 sig figs
+  await rowLoc(page, 0).locator('.row-copy').click();
+  const clip = await page.evaluate(() => navigator.clipboard.readText());
+  expect(clip).toMatch(/^0\.6{20}/); // full precision, far more digits
+});
+
+test('renders references as chips without a dollar sign', async ({ page }) => {
+  await typeInRow(page, 0, '5');
+  await page.getByText('+ Add row').click();
+  await typeInRow(page, 1, '$1 * 2');
+  await page.locator('.app-header h1').click(); // blur → typeset
+
+  const chip = rowLoc(page, 1).locator('.acalc-ref');
+  await expect(chip).toHaveText('1');
+  await expect(rowLoc(page, 1).locator('.katex')).not.toContainText('$');
+});
+
+test('the empty-row caret is full height', async ({ page }) => {
+  await page.locator('.cm-content').click(); // focus the empty first row
+  await expect(page.locator('.cm-cursor')).toHaveCount(1);
+  const caretHeight = () =>
+    page.evaluate(
+      () => document.querySelector('.cm-cursor')?.getBoundingClientRect().height ?? 0,
+    );
+  const empty = await caretHeight();
+  await page.keyboard.type('5');
+  const filled = await caretHeight();
+  expect(empty).toBeGreaterThan(10);
+  expect(Math.abs(empty - filled)).toBeLessThan(2);
+});
+
 test('editing a middle row ripples to all dependents', async ({ page }) => {
   await typeInRow(page, 0, '10');
   await page.keyboard.press('Enter');

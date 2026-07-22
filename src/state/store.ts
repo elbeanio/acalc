@@ -126,6 +126,19 @@ export class AppStore {
     this.afterChange();
   }
 
+  /**
+   * Replace a row's source without adding an undo step — used to fold a blur
+   * reformat into the preceding edit rather than making it separately undoable.
+   */
+  replaceRowSource(stackId: string, rowId: number, source: string): void {
+    const history = this.histories.get(stackId);
+    if (!history || !history.present.rows.some((r) => r.id === rowId)) return;
+    const next = ops.updateRowSource(history.present, rowId, source);
+    this.histories.set(stackId, replacePresent(history, next));
+    this.lastEdit = null;
+    this.afterChange();
+  }
+
   /** May throw {@link StateError} on an invalid/duplicate name. */
   renameRow(stackId: string, rowId: number, name: string | undefined): void {
     this.mutate(stackId, (s) => ops.renameRow(s, rowId, name));

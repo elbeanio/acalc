@@ -55,7 +55,12 @@ export function RenderedExpression({
     if (!ready || !katexRender || trimmed === '') return null;
     const latex = sourceToLatex(source);
     if (latex === null) return null;
-    return katexRender(latex, { throwOnError: false, displayMode: false });
+    return katexRender(latex, {
+      throwOnError: false,
+      displayMode: false,
+      // We generate the LaTeX ourselves; only allow our reference-chip command.
+      trust: (ctx: { command: string }) => ctx.command === '\\htmlClass',
+    });
   }, [ready, source, trimmed]);
 
   const common = {

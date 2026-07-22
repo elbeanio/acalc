@@ -37,9 +37,9 @@ describe('astToLatex', () => {
     expect(tex('10 % 3')).toBe('10 \\bmod 3');
   });
 
-  it('renders references as text, escaping names', () => {
-    expect(tex('$3 + 1')).toBe('\\text{\\$3} + 1');
-    expect(tex('$net_total')).toBe('\\text{\\$net\\_total}');
+  it('renders references as styled chips/variables, escaping names', () => {
+    expect(tex('$3 + 1')).toBe('\\htmlClass{acalc-ref}{3} + 1');
+    expect(tex('$net_total')).toBe('\\htmlClass{acalc-var}{\\mathit{net\\_total}}');
   });
 
   it('returns null for unparseable input', () => {

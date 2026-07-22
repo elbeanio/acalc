@@ -20,10 +20,6 @@ export function StackView({ stack, focusRequest }: StackViewProps) {
 
   const containerRef = useRef<HTMLDivElement>(null);
   const handles = useRef(new Map<number, EditorHandle>());
-  // While set to a future time, editor blurs don't revert a row to typeset —
-  // used to protect programmatic focus moves (activate / undo) from the blur
-  // handler firing before the new focus lands.
-  const suppressBlurUntil = useRef(0);
 
   // Exactly one row shows the CM6 editor at a time; the rest are typeset.
   const [editingRowId, setEditingRowId] = useState<number | null>(
@@ -40,7 +36,9 @@ export function StackView({ stack, focusRequest }: StackViewProps) {
    * flushSync here makes that focus land synchronously — safe before typing.
    */
   const activate = (id: number) => {
-    suppressBlurUntil.current = Date.now() + 200;
+    // flushSync + the editor's mount-autofocus focus the new row synchronously,
+    // so by the time the old editor's blur handler runs, focus is already
+    // inside the stack and the containment check keeps it in edit mode.
     flushSync(() => setEditingRowId(id));
   };
 
@@ -64,7 +62,6 @@ export function StackView({ stack, focusRequest }: StackViewProps) {
   // unless a programmatic focus move is in flight.
   const handleEditorBlur = () => {
     setTimeout(() => {
-      if (Date.now() < suppressBlurUntil.current) return;
       if (!containerRef.current?.contains(document.activeElement)) {
         setEditingRowId(null);
       }
@@ -73,7 +70,6 @@ export function StackView({ stack, focusRequest }: StackViewProps) {
 
   const addBelow = (index: number) => {
     const newId = stack.nextRowId; // insertRowAt will assign this id
-    suppressBlurUntil.current = Date.now() + 200;
     flushSync(() => {
       store.insertRowAt(stack.id, index + 1);
       setEditingRowId(newId); // its editor autofocuses on mount

@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import type { Row, RowResult } from '../engine/index.ts';
+import { formatSource } from '../lang/index.ts';
 import { StateError } from '../state/index.ts';
 import {
   ExpressionEditor,
@@ -47,6 +48,7 @@ export function RowItem({
   const store = useStore();
   const [nameDraft, setNameDraft] = useState(row.name ?? '');
   const [nameError, setNameError] = useState<string | null>(null);
+  const [copied, setCopied] = useState(false);
 
   useEffect(() => {
     setNameDraft(row.name ?? '');
@@ -64,7 +66,28 @@ export function RowItem({
     }
   };
 
+  // On blur, canonically reformat the row (folded into the preceding edit).
+  const handleEditorBlur = () => {
+    const formatted = formatSource(row.source);
+    if (formatted !== null && formatted !== row.source) {
+      store.replaceRowSource(stackId, row.id, formatted);
+    }
+    onBlur();
+  };
+
   const fmt = formatResult(result);
+  const copyValue = result?.status === 'ok' ? result.value.toString() : null;
+
+  const handleCopy = async () => {
+    if (copyValue === null) return;
+    try {
+      await navigator.clipboard.writeText(copyValue);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 1200);
+    } catch {
+      // Clipboard unavailable (e.g. insecure context) — nothing to do.
+    }
+  };
 
   return (
     <div className="row">
@@ -96,7 +119,7 @@ export function RowItem({
           onMoveUp={onMoveUp}
           onMoveDown={onMoveDown}
           onDeleteRow={onDeleteRow}
-          onBlur={onBlur}
+          onBlur={handleEditorBlur}
           getCompletions={getCompletions}
           registerHandle={registerHandle}
         />
@@ -107,17 +130,47 @@ export function RowItem({
           ariaLabel={`Expression for row ${row.id}, click to edit`}
         />
       )}
+      <span className="row-eq" aria-hidden="true">
+        {fmt.kind === 'empty' ? '' : '='}
+      </span>
       <output className={`row-result row-result--${fmt.kind}`} title={fmt.title}>
         {fmt.text}
       </output>
-      <button
-        className="row-delete"
-        aria-label={`Delete row ${row.id}`}
-        title="Delete row"
-        onClick={() => store.deleteRow(stackId, row.id)}
-      >
-        ×
-      </button>
+      <div className="row-actions">
+        {copyValue !== null && (
+          <button
+            className="row-copy"
+            onClick={handleCopy}
+            title="Copy value"
+            aria-label={`Copy value of row ${row.id}`}
+          >
+            {copied ? (
+              '✓'
+            ) : (
+              <svg
+                width="14"
+                height="14"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+                aria-hidden="true"
+              >
+                <rect x="9" y="9" width="11" height="11" rx="2" />
+                <path d="M5 15V5a2 2 0 0 1 2-2h10" />
+              </svg>
+            )}
+          </button>
+        )}
+        <button
+          className="row-delete"
+          aria-label={`Delete row ${row.id}`}
+          title="Delete row"
+          onClick={() => store.deleteRow(stackId, row.id)}
+        >
+          ×
+        </button>
+      </div>
     </div>
   );
 }

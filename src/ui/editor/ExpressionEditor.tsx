@@ -10,7 +10,7 @@ import {
 } from '@codemirror/autocomplete';
 import { defaultKeymap } from '@codemirror/commands';
 import { Annotation, EditorState } from '@codemirror/state';
-import { EditorView, keymap, placeholder } from '@codemirror/view';
+import { drawSelection, EditorView, keymap, placeholder } from '@codemirror/view';
 import { acalcLanguageSupport } from './language.ts';
 
 /** A row that can be referenced, offered in the `$` autocomplete. */
@@ -138,6 +138,9 @@ export function ExpressionEditor(props: ExpressionEditorProps) {
           appKeymap,
           keymap.of([...closeBracketsKeymap, ...completionKeymap, ...defaultKeymap]),
           closeBrackets(),
+          // Draw CM's own cursor so it's full-height even on an empty line
+          // (the native contenteditable caret renders tiny when empty).
+          drawSelection(),
           autocompletion({ override: [completionSource], activateOnTyping: true }),
           acalcLanguageSupport(),
           placeholder('expression…'),
@@ -198,16 +201,20 @@ const editorTheme = EditorView.theme({
   '&': {
     fontFamily: 'var(--mono)',
     fontSize: '1rem',
+    lineHeight: '1.5',
   },
   '.cm-content': {
     padding: '0.5rem 0.6rem',
     caretColor: 'var(--fg)',
+    lineHeight: '1.5',
   },
   '&.cm-focused': {
     outline: 'none',
   },
+  // Explicit line height so the caret is full-height even on an empty line.
   '.cm-line': {
     padding: '0',
+    lineHeight: '1.5',
   },
   '.cm-placeholder': {
     color: 'var(--muted)',
