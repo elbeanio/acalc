@@ -12,7 +12,6 @@ resource "cloudflare_pages_project" "acalc" {
       owner                          = var.github_owner
       repo_name                      = var.github_repo
       production_branch              = var.production_branch
-      deployments_enabled            = true
       production_deployments_enabled = true
       pr_comments_enabled            = true
       preview_deployment_setting     = "all"

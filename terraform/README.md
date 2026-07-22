@@ -60,6 +60,11 @@ state bucket. Note the outputs:
 
 ## Notes
 
+- The committed `.terraform.lock.hcl` pins cloudflare v5.22.0 but currently holds
+  only a single `h1:` hash for `darwin_arm64` (it was seeded from a local mirror).
+  Your first real `terraform init` will add the registry `zh:` hashes; run
+  `terraform providers lock -platform=linux_amd64 -platform=darwin_arm64` if you
+  ever run Terraform from Linux CI as well.
 - `.terraform.lock.hcl` is committed (provider pinning); state and `*.tfvars` are
   gitignored. No secrets live in the repo — the Cloudflare/R2 tokens come from the
   environment, and Pages' GitHub auth is held by Cloudflare, not the repo.
