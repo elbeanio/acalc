@@ -41,6 +41,10 @@ export function Calculator() {
           <StackView stack={active} focusRequest={snapshot.focus} />
         </>
       )}
+      <p className="hints">
+        <kbd>Enter</kbd> new row · <kbd>$</kbd> reference · <kbd>⌥↑</kbd>
+        <kbd>⌥↓</kbd> move · <kbd>⌘⇧⌫</kbd> delete row · <kbd>⌘Z</kbd> undo
+      </p>
     </div>
   );
 }

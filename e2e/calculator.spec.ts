@@ -99,6 +99,32 @@ test('arrow up moves to the row above with the cursor at the end', async ({
   await expect(result(page, 1)).toHaveText('200');
 });
 
+test('focuses the first row on load, ready to type', async ({ page }) => {
+  await expect(editor(page, 0)).toBeFocused();
+  await page.keyboard.type('7 * 6'); // no click needed
+  await expect(result(page, 0)).toHaveText('42');
+});
+
+test('Alt+ArrowUp moves a row up', async ({ page }) => {
+  await typeInRow(page, 0, '1');
+  await page.keyboard.press('Enter');
+  await page.keyboard.type('2'); // rows: [1, 2], focus on row 2
+
+  await page.keyboard.press('Alt+ArrowUp'); // move "2" above "1"
+  await expect(result(page, 0)).toHaveText('2');
+  await expect(result(page, 1)).toHaveText('1');
+});
+
+test('Cmd/Ctrl+Shift+Backspace deletes the focused row', async ({ page }) => {
+  await typeInRow(page, 0, '10');
+  await page.keyboard.press('Enter');
+  await page.keyboard.type('20'); // rows: [10, 20], focus on row 2
+
+  await page.keyboard.press('ControlOrMeta+Shift+Backspace');
+  await expect(rows(page)).toHaveCount(1);
+  await expect(result(page, 0)).toHaveText('10');
+});
+
 // --- undo ------------------------------------------------------------------
 
 test('undo moves focus to the changed row', async ({ page }) => {

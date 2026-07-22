@@ -281,3 +281,19 @@ body {
   color: var(--muted);
   font-size: 0.9rem;
 }
+
+.hints {
+  margin-top: 1.5rem;
+  color: var(--muted);
+  font-size: 0.8rem;
+}
+
+.hints kbd {
+  font-family: var(--mono);
+  font-size: 0.75rem;
+  background: var(--result-bg);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  padding: 0.05rem 0.3rem;
+  margin: 0 0.15rem;
+}

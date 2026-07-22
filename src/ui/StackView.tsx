@@ -43,6 +43,14 @@ export function StackView({ stack, focusRequest }: StackViewProps) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [focusRequest?.token]);
 
+  // Focus the first row when the app opens, so it's ready for the keyboard.
+  useEffect(() => {
+    const first = stack.rows[0];
+    if (first) focusRowSoon(first.id, true);
+    // Once, on initial mount only.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
   const addBelow = (index: number) => {
     const newId = stack.nextRowId; // insertRowAt will assign this id
     // flushSync so the new row is mounted and its editor handle registered
@@ -86,6 +94,24 @@ export function StackView({ stack, focusRequest }: StackViewProps) {
             onArrowDown={() => {
               const next = stack.rows[index + 1];
               return next ? focusRow(next.id, true) : false;
+            }}
+            onMoveUp={() => {
+              if (index === 0) return false;
+              store.moveRow(stack.id, row.id, index - 1);
+              focusRowSoon(row.id); // keep focus on the moved row
+              return true;
+            }}
+            onMoveDown={() => {
+              if (index === stack.rows.length - 1) return false;
+              store.moveRow(stack.id, row.id, index + 1);
+              focusRowSoon(row.id);
+              return true;
+            }}
+            onDeleteRow={() => {
+              const neighbour = stack.rows[index + 1] ?? stack.rows[index - 1];
+              store.deleteRow(stack.id, row.id);
+              if (neighbour) focusRowSoon(neighbour.id, true);
+              return true;
             }}
             getCompletions={completionsFor(row.id)}
           />

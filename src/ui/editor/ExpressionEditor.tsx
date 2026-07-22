@@ -34,6 +34,9 @@ export interface ExpressionEditorProps {
   /** Return true if the key was handled (e.g. focus moved to another row). */
   onArrowUp?: () => boolean;
   onArrowDown?: () => boolean;
+  onMoveUp?: () => boolean;
+  onMoveDown?: () => boolean;
+  onDeleteRow?: () => boolean;
   getCompletions: () => ReferenceOption[];
   registerHandle?: (handle: EditorHandle | null) => void;
   ariaLabel?: string;
@@ -94,6 +97,15 @@ export function ExpressionEditor(props: ExpressionEditorProps) {
           if (isCompletionOpen(view)) return false;
           return propsRef.current.onArrowDown?.() ?? false;
         },
+      },
+      { key: 'Alt-ArrowUp', run: () => propsRef.current.onMoveUp?.() ?? false },
+      {
+        key: 'Alt-ArrowDown',
+        run: () => propsRef.current.onMoveDown?.() ?? false,
+      },
+      {
+        key: 'Mod-Shift-Backspace',
+        run: () => propsRef.current.onDeleteRow?.() ?? false,
       },
     ]);
 
