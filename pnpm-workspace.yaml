@@ -1,2 +1,8 @@
 allowBuilds:
   esbuild: true
+  # sharp + workerd are injected by Cloudflare Pages' build image (their runtime
+  # / image tooling). pnpm 10+ hard-fails the build if their install scripts
+  # aren't pre-approved (ERR_PNPM_IGNORED_BUILDS). See
+  # https://github.com/cloudflare/workers-sdk/issues/13928
+  sharp: true
+  workerd: true
