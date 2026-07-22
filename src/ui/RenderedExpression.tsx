@@ -1,25 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import { sourceToLatex } from '../lang/index.ts';
-
-type KatexRender = (tex: string, options: object) => string;
-
-// KaTeX (and its fonts/CSS) are loaded on demand, the first time any row is
-// typeset, then cached module-wide so later rows render without a round trip.
-let katexRender: KatexRender | null = null;
-let loading: Promise<void> | null = null;
-
-function ensureKatex(): Promise<void> {
-  if (katexRender) return Promise.resolve();
-  if (!loading) {
-    loading = Promise.all([
-      import('katex'),
-      import('katex/dist/katex.min.css'),
-    ]).then(([mod]) => {
-      katexRender = mod.default.renderToString;
-    });
-  }
-  return loading;
-}
+import { ensureKatex, getKatexRender } from './katex-loader.ts';
 
 interface RenderedExpressionProps {
   source: string;
@@ -37,7 +18,7 @@ export function RenderedExpression({
   onActivate,
   ariaLabel,
 }: RenderedExpressionProps) {
-  const [ready, setReady] = useState(katexRender !== null);
+  const [ready, setReady] = useState(getKatexRender() !== null);
 
   useEffect(() => {
     if (ready) return;
@@ -52,6 +33,7 @@ export function RenderedExpression({
 
   const trimmed = source.trim();
   const html = useMemo(() => {
+    const katexRender = getKatexRender();
     if (!ready || !katexRender || trimmed === '') return null;
     const latex = sourceToLatex(source);
     if (latex === null) return null;

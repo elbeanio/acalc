@@ -10,9 +10,7 @@ export default defineConfig({
   testDir: './e2e',
   fullyParallel: true,
   forbidOnly: !!process.env.CI,
-  // One local retry absorbs the occasional Vite-dev cold-compile of the lazy
-  // KaTeX chunk under parallel load; CI retries more. Real failures still fail.
-  retries: process.env.CI ? 2 : 1,
+  retries: process.env.CI ? 2 : 0,
   reporter: process.env.CI ? 'github' : 'list',
   use: {
     baseURL: 'http://localhost:5173',

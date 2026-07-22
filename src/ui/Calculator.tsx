@@ -1,4 +1,5 @@
 import { useEffect } from 'react';
+import { prewarmKatex } from './katex-loader.ts';
 import { StackTabs } from './StackTabs.tsx';
 import { StackToolbar } from './StackToolbar.tsx';
 import { StackView } from './StackView.tsx';
@@ -7,6 +8,9 @@ import { useSnapshot, useStore } from './useStore.ts';
 export function Calculator() {
   const store = useStore();
   const snapshot = useSnapshot();
+
+  // Load KaTeX during idle time so the first typeset row is instant.
+  useEffect(() => prewarmKatex(), []);
 
   // Global undo/redo shortcuts.
   useEffect(() => {
