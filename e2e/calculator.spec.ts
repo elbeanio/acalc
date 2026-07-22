@@ -372,6 +372,24 @@ test('the empty-row caret is full height', async ({ page }) => {
   expect(colour).not.toMatch(/rgba\([^)]*,\s*0\)$/); // not fully transparent
 });
 
+test('the help cheat sheet opens, lists functions, and closes', async ({
+  page,
+}) => {
+  await page.getByRole('button', { name: 'Help' }).click();
+  await expect(page.getByRole('heading', { name: 'acalc cheat sheet' })).toBeVisible();
+  await expect(page.getByText('square root')).toBeVisible();
+  await expect(page.getByText('sqrt(16) = 4')).toBeVisible();
+
+  await page.keyboard.press('Escape');
+  await expect(page.getByText('square root')).not.toBeVisible();
+});
+
+test('? opens help when not typing in a row', async ({ page }) => {
+  await page.locator('.app-header').click(); // move focus out of the editor
+  await page.keyboard.press('Shift+Slash'); // "?"
+  await expect(page.getByText('square root')).toBeVisible();
+});
+
 test('editing a middle row ripples to all dependents', async ({ page }) => {
   await typeInRow(page, 0, '10');
   await page.keyboard.press('Enter');

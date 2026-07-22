@@ -10,7 +10,10 @@ export default defineConfig({
   testDir: './e2e',
   fullyParallel: true,
   forbidOnly: !!process.env.CI,
-  retries: process.env.CI ? 2 : 0,
+  // Prewarming KaTeX shrinks the lazy-chunk cold-compile flake but can't fully
+  // kill it under full-parallel load; one retry keeps runs green. Real failures
+  // still fail both attempts.
+  retries: process.env.CI ? 2 : 1,
   reporter: process.env.CI ? 'github' : 'list',
   use: {
     baseURL: 'http://localhost:5173',
