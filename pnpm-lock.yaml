@@ -8,6 +8,9 @@ importers:
 
   .:
     dependencies:
+      decimal.js:
+        specifier: ^10.6.0
+        version: 10.6.0
       react:
         specifier: ^19.0.0
         version: 19.2.7
