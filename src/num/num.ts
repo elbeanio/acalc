@@ -111,6 +111,22 @@ export class Num {
     return new Num(this.d.toDecimalPlaces(decimalPlaces));
   }
 
+  floor(): Num {
+    return new Num(this.d.floor());
+  }
+
+  ceil(): Num {
+    return new Num(this.d.ceil());
+  }
+
+  /**
+   * Convert to a JS number. Lossy — use only for small integer quantities like
+   * argument counts or rounding precision, never for values shown to the user.
+   */
+  toNumber(): number {
+    return this.d.toNumber();
+  }
+
   // --- comparison ----------------------------------------------------------
 
   /** -1 if `this < other`, 0 if equal, 1 if `this > other`. */
