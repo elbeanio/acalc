@@ -1,0 +1,96 @@
+import { ParseError } from './errors.ts';
+import type { Token, TokenType } from './tokens.ts';
+
+const NUMBER_RE = /(?:\d+\.?\d*|\.\d+)(?:[eE][+-]?\d+)?/y;
+const IDENT_RE = /[A-Za-z_][A-Za-z0-9_]*/y;
+const DIGITS_RE = /\d+/y;
+
+/** Single-character tokens, including accepted unicode operator aliases. */
+const SINGLE_CHAR: Record<string, TokenType> = {
+  '+': 'plus',
+  '-': 'minus',
+  '−': 'minus', // − minus sign
+  '*': 'star',
+  '×': 'star', // × multiplication sign
+  '/': 'slash',
+  '÷': 'slash', // ÷ division sign
+  '%': 'percent',
+  '^': 'caret',
+  '(': 'lparen',
+  ')': 'rparen',
+  ',': 'comma',
+};
+
+/** Tokenise an expression string. Throws {@link ParseError} on invalid input. */
+export function tokenize(source: string): Token[] {
+  const tokens: Token[] = [];
+  let i = 0;
+
+  while (i < source.length) {
+    const ch = source[i]!;
+
+    if (ch === ' ' || ch === '\t' || ch === '\n' || ch === '\r') {
+      i++;
+      continue;
+    }
+
+    // Numbers (also handles a leading-dot form like `.5`).
+    if ((ch >= '0' && ch <= '9') || (ch === '.' && isDigit(source[i + 1]))) {
+      NUMBER_RE.lastIndex = i;
+      const m = NUMBER_RE.exec(source)!;
+      tokens.push({ type: 'number', value: m[0], start: i });
+      i += m[0].length;
+      continue;
+    }
+
+    // References: `$` followed by an identifier or digits.
+    if (ch === '$') {
+      IDENT_RE.lastIndex = i + 1;
+      const nameMatch = IDENT_RE.exec(source);
+      if (nameMatch && nameMatch.index === i + 1) {
+        tokens.push({ type: 'ref', value: nameMatch[0], start: i });
+        i += 1 + nameMatch[0].length;
+        continue;
+      }
+      DIGITS_RE.lastIndex = i + 1;
+      const idMatch = DIGITS_RE.exec(source);
+      if (idMatch && idMatch.index === i + 1) {
+        tokens.push({ type: 'ref', value: idMatch[0], start: i });
+        i += 1 + idMatch[0].length;
+        continue;
+      }
+      throw new ParseError('Expected a reference name or number after "$"', i);
+    }
+
+    // Identifiers (functions and constants).
+    if (isIdentStart(ch)) {
+      IDENT_RE.lastIndex = i;
+      const m = IDENT_RE.exec(source)!;
+      tokens.push({ type: 'ident', value: m[0], start: i });
+      i += m[0].length;
+      continue;
+    }
+
+    const single = SINGLE_CHAR[ch];
+    if (single) {
+      tokens.push({ type: single, value: ch, start: i });
+      i++;
+      continue;
+    }
+
+    throw new ParseError(`Unexpected character "${ch}"`, i);
+  }
+
+  tokens.push({ type: 'eof', value: '', start: source.length });
+  return tokens;
+}
+
+function isDigit(ch: string | undefined): boolean {
+  return ch !== undefined && ch >= '0' && ch <= '9';
+}
+
+function isIdentStart(ch: string): boolean {
+  return (
+    (ch >= 'a' && ch <= 'z') || (ch >= 'A' && ch <= 'Z') || ch === '_'
+  );
+}
