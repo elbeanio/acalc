@@ -23,6 +23,8 @@ export interface RowError {
   readonly message: string;
   /** Source index for parse errors, when known. */
   readonly position?: number;
+  /** For dangling `ref` errors: the unresolved references, e.g. `["$2"]`. */
+  readonly refs?: readonly string[];
 }
 
 /** The computed outcome for a row. */

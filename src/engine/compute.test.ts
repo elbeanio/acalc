@@ -82,6 +82,13 @@ describe('computeStack: dangling references (delete policy b)', () => {
     expect(errKind(results, 1)).toBe('ref');
   });
 
+  it('reports exactly which references are dangling', () => {
+    const results = compute([{ id: 1, source: '$8 + $9' }]);
+    const r = results.get(1);
+    if (r?.status !== 'error') throw new Error('expected error');
+    expect(r.error.refs).toEqual(['$8', '$9']);
+  });
+
   it('a deleted row leaves its dependents dangling, nothing else lost', () => {
     // Row 1 has been deleted; row 2 still references it, row 3 is independent.
     const results = compute([

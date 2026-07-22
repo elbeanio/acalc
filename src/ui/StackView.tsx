@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useMemo, useRef } from 'react';
 import { computeStack } from '../engine/index.ts';
 import type { Stack } from '../state/index.ts';
 import type {
@@ -13,15 +13,8 @@ export function StackView({ stack }: { stack: Stack }) {
   const results = useMemo(() => computeStack(stack.rows), [stack.rows]);
 
   const handles = useRef(new Map<number, EditorHandle>());
-  const [focusId, setFocusId] = useState<number | null>(null);
 
-  // After a row is added/deleted, move focus to the requested row's editor.
-  useEffect(() => {
-    if (focusId === null) return;
-    handles.current.get(focusId)?.focus();
-    setFocusId(null);
-  }, [focusId, stack.rows]);
-
+  /** Focus a row that is already mounted. */
   const focusRow = (id: number): boolean => {
     const handle = handles.current.get(id);
     if (!handle) return false;
@@ -29,10 +22,18 @@ export function StackView({ stack }: { stack: Stack }) {
     return true;
   };
 
+  /**
+   * Focus a row on the next frame — after React (and StrictMode's mount/remount)
+   * has committed, so a just-added row's editor handle is registered.
+   */
+  const focusRowSoon = (id: number) => {
+    requestAnimationFrame(() => handles.current.get(id)?.focus());
+  };
+
   const addBelow = (index: number) => {
     const newId = stack.nextRowId; // insertRowAt will assign this id
     store.insertRowAt(stack.id, index + 1);
-    setFocusId(newId);
+    focusRowSoon(newId);
   };
 
   /** Reference options for a row's `$` autocomplete: every other row's value. */
@@ -75,7 +76,7 @@ export function StackView({ stack }: { stack: Stack }) {
               if (stack.rows.length <= 1) return false;
               const neighbour = stack.rows[index - 1] ?? stack.rows[index + 1];
               store.deleteRow(stack.id, row.id);
-              if (neighbour) setFocusId(neighbour.id);
+              if (neighbour) focusRowSoon(neighbour.id);
               return true;
             }}
             getCompletions={completionsFor(row.id)}

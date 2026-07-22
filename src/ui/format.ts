@@ -13,11 +13,12 @@ export function formatResult(result: RowResult | undefined): FormattedResult {
     return { kind: 'empty', text: '' };
   }
   if (result.status === 'error') {
-    return {
-      kind: 'error',
-      text: result.error.kind === 'ref' ? '#ref!' : result.error.message,
-      title: result.error.message,
-    };
+    const { error } = result;
+    const text =
+      error.kind === 'ref'
+        ? `#ref!(${error.refs?.join(', ') ?? ''})`
+        : error.message;
+    return { kind: 'error', text, title: error.message };
   }
   return {
     kind: 'value',

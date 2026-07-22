@@ -1,4 +1,4 @@
-import { createDocument } from './document.ts';
+import { createStack } from './stack-ops.ts';
 import type { Document, PersistedState, Row, Stack } from './types.ts';
 
 export const SCHEMA_VERSION = 1;
@@ -47,7 +47,7 @@ export function createInitialState(stackId: string): PersistedState {
   return {
     schemaVersion: SCHEMA_VERSION,
     activeStackId: stackId,
-    document: createDocument(stackId),
+    document: { stacks: [createStack(stackId, 'Untitled')] },
   };
 }
 

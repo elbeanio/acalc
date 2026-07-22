@@ -37,10 +37,10 @@ describe('Calculator', () => {
     expect(results(container)).toEqual(['10', '100']);
   });
 
-  it('shows #ref! for a dangling reference', () => {
+  it('shows which reference is dangling', () => {
     const { store, container } = renderWithStore(<Calculator />);
     edit(store, 1, '$99 + 1');
-    expect(results(container)).toContain('#ref!');
+    expect(results(container)).toContain('#ref!($99)');
   });
 
   it('adds a new stack via the + tab', () => {

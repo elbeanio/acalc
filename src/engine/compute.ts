@@ -9,8 +9,8 @@ interface Analysis {
   readonly parseError: RowError | null;
   /** Resolved dependency ids (rows that exist), deduped; may include self. */
   readonly deps: number[];
-  /** True if any reference could not be resolved to an existing row. */
-  readonly dangling: boolean;
+  /** Display strings of references that could not be resolved, e.g. `$2`. */
+  readonly danglingRefs: string[];
   readonly empty: boolean;
 }
 
@@ -48,7 +48,7 @@ export function computeStack(rows: readonly Row[]): Map<number, RowResult> {
         ast: null,
         parseError: null,
         deps: [],
-        dangling: false,
+        danglingRefs: [],
         empty: true,
       });
       continue;
@@ -63,24 +63,27 @@ export function computeStack(rows: readonly Row[]): Map<number, RowResult> {
         ast: null,
         parseError: { kind: 'parse', message: pe.message, position: pe.position },
         deps: [],
-        dangling: false,
+        danglingRefs: [],
         empty: false,
       });
       continue;
     }
 
     const deps = new Set<number>();
-    let dangling = false;
+    const dangling = new Set<string>();
     for (const target of extractRefTargets(ast)) {
       const id = resolveId(target);
-      if (id === undefined) dangling = true;
-      else deps.add(id);
+      if (id === undefined) {
+        dangling.add(target.kind === 'id' ? `$${target.id}` : `$${target.name}`);
+      } else {
+        deps.add(id);
+      }
     }
     analyses.set(r.id, {
       ast,
       parseError: null,
       deps: [...deps],
-      dangling,
+      danglingRefs: [...dangling],
       empty: false,
     });
   }
@@ -119,10 +122,15 @@ export function computeStack(rows: readonly Row[]): Map<number, RowResult> {
       results.set(id, { status: 'error', error: a.parseError });
       continue;
     }
-    if (a.dangling) {
+    if (a.danglingRefs.length > 0) {
+      const list = a.danglingRefs.join(', ');
       results.set(id, {
         status: 'error',
-        error: { kind: 'ref', message: '#ref! — reference to a missing row' },
+        error: {
+          kind: 'ref',
+          message: `Unknown reference ${list}`,
+          refs: a.danglingRefs,
+        },
       });
       continue;
     }
