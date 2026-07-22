@@ -25,7 +25,7 @@ unary        = ( "-" | "+" ) unary
 
 power        = postfix ( "^" unary )? ;                 (* right associative *)
 
-postfix      = primary "%"* ;                           (* "%" here is percent *)
+postfix      = primary ( "%" | "!" )* ;   (* "%" = percent, "!" = factorial *)
 
 primary      = NUMBER
              | REF
@@ -42,7 +42,10 @@ arguments    = expression ( "," expression )* ;
 2. `*` `/` `%`(modulo)   (left-associative)
 3. unary `-` `+`
 4. `^` (power, right-associative — binds tighter than unary, so `-2^2 = -4`)
-5. `%`(percent, postfix) and function calls
+5. `%`(percent, postfix), `!`(factorial, postfix) and function calls
+
+`!` is the postfix factorial: `5!` → `120`. It requires a non-negative integer
+operand (otherwise an evaluation error) and is computed exactly.
 
 ## The two meanings of `%`
 

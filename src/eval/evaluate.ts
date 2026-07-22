@@ -40,6 +40,9 @@ export function evaluate(node: Node, resolve: RefResolver): Num {
     case 'percent':
       return evaluate(node.operand, resolve).mul(HUNDREDTH);
 
+    case 'factorial':
+      return factorial(evaluate(node.operand, resolve));
+
     case 'binary':
       return evaluateBinary(node, resolve);
 
@@ -72,6 +75,23 @@ function evaluateBinary(
     case '^':
       return finite(left.pow(right), 'exponentiation');
   }
+}
+
+/** Largest factorial argument accepted, to bound work. */
+const FACTORIAL_LIMIT = 10000;
+
+/** Exact integer factorial (`n!`) via BigInt. */
+function factorial(value: Num): Num {
+  if (!value.isInteger() || value.isNegative()) {
+    throw new EvalError('Factorial requires a non-negative integer');
+  }
+  const n = value.toNumber();
+  if (n > FACTORIAL_LIMIT) {
+    throw new EvalError(`Factorial argument too large (max ${FACTORIAL_LIMIT})`);
+  }
+  let product = 1n;
+  for (let i = 2n; i <= BigInt(n); i++) product *= i;
+  return Num.of(product.toString());
 }
 
 /** Guard against NaN / infinite results from an operation. */

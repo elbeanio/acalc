@@ -211,6 +211,11 @@ const editorTheme = EditorView.theme({
   '&.cm-focused': {
     outline: 'none',
   },
+  // drawSelection draws CM's own cursor — give it a visible colour and width.
+  '.cm-cursor, .cm-cursor-primary': {
+    borderLeftColor: 'var(--fg)',
+    borderLeftWidth: '2px',
+  },
   // Explicit line height so the caret is full-height even on an empty line.
   '.cm-line': {
     padding: '0',

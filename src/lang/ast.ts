@@ -18,4 +18,5 @@ export type Node =
       readonly right: Node;
     }
   | { readonly type: 'percent'; readonly operand: Node } // postfix %
+  | { readonly type: 'factorial'; readonly operand: Node } // postfix !
   | { readonly type: 'call'; readonly name: string; readonly args: Node[] };

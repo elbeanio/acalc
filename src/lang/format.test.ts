@@ -15,6 +15,8 @@ describe('formatSource (canonical reformatting)', () => {
     expect(fmt('10%')).toBe('10%');
     expect(fmt('10%3')).toBe('10 % 3');
     expect(fmt('min(1,2,3)')).toBe('min(1, 2, 3)');
+    expect(fmt('5!')).toBe('5!');
+    expect(fmt('(3+2)!')).toBe('(3 + 2)!');
   });
 
   it('preserves meaning with minimal parentheses', () => {

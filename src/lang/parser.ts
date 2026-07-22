@@ -92,14 +92,21 @@ class Parser {
     return base;
   }
 
-  // postfix = primary "%"*   (percent only; mod is handled in multiplicative)
+  // postfix = primary ("%" | "!")*   (percent/factorial; mod handled above)
   private parsePostfix(): Node {
     let node = this.parsePrimary();
-    while (this.peek().type === 'percent' && !this.isInfixPercent()) {
-      this.advance();
-      node = { type: 'percent', operand: node };
+    for (;;) {
+      const t = this.peek().type;
+      if (t === 'percent' && !this.isInfixPercent()) {
+        this.advance();
+        node = { type: 'percent', operand: node };
+      } else if (t === 'bang') {
+        this.advance();
+        node = { type: 'factorial', operand: node };
+      } else {
+        return node;
+      }
     }
-    return node;
   }
 
   private parsePrimary(): Node {

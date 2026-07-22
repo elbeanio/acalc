@@ -253,6 +253,16 @@ test('detects a circular reference', async ({ page }) => {
   await expect(result(page, 1)).toHaveText('Circular reference');
 });
 
+test('computes factorial', async ({ page }) => {
+  await typeInRow(page, 0, '5!');
+  await expect(result(page, 0)).toHaveText('120');
+
+  await editRow(page, 0);
+  await clearFocusedRow(page);
+  await page.keyboard.type('(3 + 2)! + 1');
+  await expect(result(page, 0)).toHaveText('121');
+});
+
 test('percent and modulo evaluate correctly', async ({ page }) => {
   await typeInRow(page, 0, '200 + 10%');
   await expect(result(page, 0)).toHaveText('200.1');
@@ -352,6 +362,14 @@ test('the empty-row caret is full height', async ({ page }) => {
   const filled = await caretHeight();
   expect(empty).toBeGreaterThan(10);
   expect(Math.abs(empty - filled)).toBeLessThan(2);
+
+  // And the caret is actually visible (a coloured, non-transparent border).
+  const colour = await page.evaluate(() => {
+    const cursor = document.querySelector('.cm-cursor');
+    return cursor ? getComputedStyle(cursor).borderLeftColor : '';
+  });
+  expect(colour).not.toBe('transparent');
+  expect(colour).not.toMatch(/rgba\([^)]*,\s*0\)$/); // not fully transparent
 });
 
 test('editing a middle row ripples to all dependents', async ({ page }) => {

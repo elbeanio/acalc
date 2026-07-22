@@ -39,6 +39,15 @@ describe('evaluate: arithmetic & operators', () => {
   it('decimal correctness end to end', () => {
     expect(run('0.1 + 0.2')).toBe('0.3');
   });
+
+  it('factorial', () => {
+    expect(run('5!')).toBe('120');
+    expect(run('0!')).toBe('1');
+    expect(run('3! + 1')).toBe('7');
+    expect(run('sqrt(4)!')).toBe('2');
+    expect(() => run('(-1)!')).toThrow(/non-negative integer/);
+    expect(() => run('2.5!')).toThrow(/non-negative integer/);
+  });
 });
 
 describe('evaluate: constants & functions', () => {

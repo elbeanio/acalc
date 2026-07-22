@@ -7,6 +7,7 @@ export type TokenType =
   | 'star'
   | 'slash'
   | 'percent'
+  | 'bang'
   | 'caret'
   | 'lparen'
   | 'rparen'

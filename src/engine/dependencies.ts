@@ -14,6 +14,7 @@ function walk(node: Node, out: RefTarget[]): void {
       return;
     case 'unary':
     case 'percent':
+    case 'factorial':
       walk(node.operand, out);
       return;
     case 'binary':

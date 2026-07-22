@@ -40,6 +40,7 @@ function precedenceOf(node: Node): number {
     case 'unary':
       return PREC.unary;
     case 'percent':
+    case 'factorial':
       return PREC.postfix;
     default:
       return PREC.atom;
@@ -84,6 +85,9 @@ function renderInner(node: Node): string {
 
     case 'percent':
       return `${render(node.operand, PREC.postfix)}\\%`;
+
+    case 'factorial':
+      return `${render(node.operand, PREC.postfix)}!`;
 
     case 'binary':
       return renderBinary(node);

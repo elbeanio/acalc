@@ -20,6 +20,8 @@ function sexpr(node: Node): string {
       return `(${node.op === '%' ? 'mod' : node.op} ${sexpr(node.left)} ${sexpr(node.right)})`;
     case 'percent':
       return `(pct ${sexpr(node.operand)})`;
+    case 'factorial':
+      return `(fact ${sexpr(node.operand)})`;
     case 'call':
       return `(${node.name}${node.args.map((a) => ' ' + sexpr(a)).join('')})`;
   }
@@ -68,6 +70,15 @@ describe('parser: the two meanings of %', () => {
   it('a leading-minus right operand reads as percent-then-subtract', () => {
     expect(sx('10 % -3')).toBe('(- (pct 10) 3)');
     expect(sx('10 % (-3)')).toBe('(mod 10 (- 3))');
+  });
+});
+
+describe('parser: factorial', () => {
+  it('parses postfix factorial', () => {
+    expect(sx('5!')).toBe('(fact 5)');
+    expect(sx('(3 + 2)!')).toBe('(fact (+ 3 2))');
+    expect(sx('5!%')).toBe('(pct (fact 5))');
+    expect(sx('2 * 3!')).toBe('(* 2 (fact 3))');
   });
 });
 

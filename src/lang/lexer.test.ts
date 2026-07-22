@@ -42,6 +42,10 @@ describe('lexer', () => {
     ]);
   });
 
+  it('tokenises postfix factorial', () => {
+    expect(types('5!')).toEqual(['number', 'bang', 'eof']);
+  });
+
   it('records token start positions', () => {
     const [a, b] = tokenize('12 + 3');
     expect(a?.start).toBe(0);

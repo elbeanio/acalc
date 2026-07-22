@@ -15,6 +15,7 @@ const SINGLE_CHAR: Record<string, TokenType> = {
   '/': 'slash',
   '÷': 'slash', // ÷ division sign
   '%': 'percent',
+  '!': 'bang',
   '^': 'caret',
   '(': 'lparen',
   ')': 'rparen',
