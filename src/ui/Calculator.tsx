@@ -38,7 +38,7 @@ export function Calculator() {
             canUndo={snapshot.canUndo}
             canRedo={snapshot.canRedo}
           />
-          <StackView stack={active} />
+          <StackView stack={active} focusRequest={snapshot.focus} />
         </>
       )}
     </div>

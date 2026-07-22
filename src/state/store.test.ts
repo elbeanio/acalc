@@ -105,6 +105,22 @@ describe('AppStore: per-stack undo/redo', () => {
     expect(store.getSnapshot().activeStackId).toBe(second);
   });
 
+  it('requests focus on the row changed by undo/redo', () => {
+    const { store } = newStore();
+    store.addRow('stack-1', 'x'); // row 2
+    store.updateRowSource('stack-1', 2, 'edited');
+    expect(store.getSnapshot().focus).toBeNull(); // edits do not request focus
+
+    store.undo(); // reverts row 2
+    const first = store.getSnapshot().focus;
+    expect(first?.rowId).toBe(2);
+
+    store.redo();
+    const second = store.getSnapshot().focus;
+    expect(second?.rowId).toBe(2);
+    expect(second!.token).toBeGreaterThan(first!.token);
+  });
+
   it('reflects undo availability for the active stack only', () => {
     const { store } = newStore();
     store.updateRowSource('stack-1', 1, 'edit');

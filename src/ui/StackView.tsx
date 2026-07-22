@@ -1,6 +1,6 @@
-import { useMemo, useRef } from 'react';
+import { useEffect, useMemo, useRef } from 'react';
 import { computeStack } from '../engine/index.ts';
-import type { Stack } from '../state/index.ts';
+import type { FocusRequest, Stack } from '../state/index.ts';
 import type {
   EditorHandle,
   ReferenceOption,
@@ -8,27 +8,39 @@ import type {
 import { RowItem } from './RowItem.tsx';
 import { useStore } from './useStore.ts';
 
-export function StackView({ stack }: { stack: Stack }) {
+interface StackViewProps {
+  stack: Stack;
+  focusRequest: FocusRequest | null;
+}
+
+export function StackView({ stack, focusRequest }: StackViewProps) {
   const store = useStore();
   const results = useMemo(() => computeStack(stack.rows), [stack.rows]);
 
   const handles = useRef(new Map<number, EditorHandle>());
 
-  /** Focus a row that is already mounted. */
-  const focusRow = (id: number): boolean => {
+  /** Focus an already-mounted row, optionally putting the cursor at the end. */
+  const focusRow = (id: number, cursorToEnd = false): boolean => {
     const handle = handles.current.get(id);
     if (!handle) return false;
-    handle.focus();
+    handle.focus(cursorToEnd);
     return true;
   };
 
   /**
    * Focus a row on the next frame — after React (and StrictMode's mount/remount)
-   * has committed, so a just-added row's editor handle is registered.
+   * has committed, so a just-added/re-added row's editor handle is registered.
    */
-  const focusRowSoon = (id: number) => {
-    requestAnimationFrame(() => handles.current.get(id)?.focus());
+  const focusRowSoon = (id: number, cursorToEnd = false) => {
+    requestAnimationFrame(() => handles.current.get(id)?.focus(cursorToEnd));
   };
+
+  // After undo/redo, move focus to the changed row so typing continues there.
+  useEffect(() => {
+    if (focusRequest) focusRowSoon(focusRequest.rowId, true);
+    // Keyed on the request token so it fires once per undo/redo, not per edit.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [focusRequest?.token]);
 
   const addBelow = (index: number) => {
     const newId = stack.nextRowId; // insertRowAt will assign this id
@@ -66,18 +78,11 @@ export function StackView({ stack }: { stack: Stack }) {
             onEnter={() => addBelow(index)}
             onArrowUp={() => {
               const prev = stack.rows[index - 1];
-              return prev ? focusRow(prev.id) : false;
+              return prev ? focusRow(prev.id, true) : false;
             }}
             onArrowDown={() => {
               const next = stack.rows[index + 1];
-              return next ? focusRow(next.id) : false;
-            }}
-            onBackspaceEmpty={() => {
-              if (stack.rows.length <= 1) return false;
-              const neighbour = stack.rows[index - 1] ?? stack.rows[index + 1];
-              store.deleteRow(stack.id, row.id);
-              if (neighbour) focusRowSoon(neighbour.id);
-              return true;
+              return next ? focusRow(next.id, true) : false;
             }}
             getCompletions={completionsFor(row.id)}
           />

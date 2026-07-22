@@ -23,7 +23,8 @@ export interface ReferenceOption {
 
 /** Imperative handle so the parent can focus a specific row's editor. */
 export interface EditorHandle {
-  focus(): void;
+  /** Focus the editor, optionally moving the cursor to the end of the text. */
+  focus(cursorToEnd?: boolean): void;
 }
 
 export interface ExpressionEditorProps {
@@ -33,7 +34,6 @@ export interface ExpressionEditorProps {
   /** Return true if the key was handled (e.g. focus moved to another row). */
   onArrowUp?: () => boolean;
   onArrowDown?: () => boolean;
-  onBackspaceEmpty?: () => boolean;
   getCompletions: () => ReferenceOption[];
   registerHandle?: (handle: EditorHandle | null) => void;
   ariaLabel?: string;
@@ -95,15 +95,6 @@ export function ExpressionEditor(props: ExpressionEditorProps) {
           return propsRef.current.onArrowDown?.() ?? false;
         },
       },
-      {
-        key: 'Backspace',
-        run: (view) => {
-          if (view.state.doc.length === 0) {
-            return propsRef.current.onBackspaceEmpty?.() ?? false;
-          }
-          return false;
-        },
-      },
     ]);
 
     // Reject edits that would introduce a second line — this is single-line.
@@ -139,7 +130,14 @@ export function ExpressionEditor(props: ExpressionEditorProps) {
     });
 
     viewRef.current = view;
-    propsRef.current.registerHandle?.({ focus: () => view.focus() });
+    propsRef.current.registerHandle?.({
+      focus: (cursorToEnd) => {
+        if (cursorToEnd) {
+          view.dispatch({ selection: { anchor: view.state.doc.length } });
+        }
+        view.focus();
+      },
+    });
 
     return () => {
       propsRef.current.registerHandle?.(null);

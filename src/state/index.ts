@@ -1,5 +1,5 @@
 export { AppStore } from './store.ts';
-export type { StoreSnapshot } from './store.ts';
+export type { StoreSnapshot, FocusRequest } from './store.ts';
 export {
   LocalStorageAdapter,
   MemoryStorageAdapter,

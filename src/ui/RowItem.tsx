@@ -17,7 +17,6 @@ interface RowItemProps {
   onEnter: () => void;
   onArrowUp: () => boolean;
   onArrowDown: () => boolean;
-  onBackspaceEmpty: () => boolean;
   getCompletions: () => ReferenceOption[];
 }
 
@@ -29,7 +28,6 @@ export function RowItem({
   onEnter,
   onArrowUp,
   onArrowDown,
-  onBackspaceEmpty,
   getCompletions,
 }: RowItemProps) {
   const store = useStore();
@@ -79,7 +77,6 @@ export function RowItem({
         onEnter={onEnter}
         onArrowUp={onArrowUp}
         onArrowDown={onArrowDown}
-        onBackspaceEmpty={onBackspaceEmpty}
         getCompletions={getCompletions}
         registerHandle={registerHandle}
       />

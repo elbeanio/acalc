@@ -18,6 +18,16 @@ import {
 import type { Document, Stack } from './types.ts';
 import { StateError } from './types.ts';
 
+/**
+ * A request to move focus to a row (e.g. after undo/redo, so the user can keep
+ * typing where the change happened). `token` increments per request so the UI
+ * reacts exactly once and ordinary edits don't steal focus.
+ */
+export interface FocusRequest {
+  readonly rowId: number;
+  readonly token: number;
+}
+
 /** Immutable view of the store, consumed by the UI. */
 export interface StoreSnapshot {
   readonly document: Document;
@@ -25,6 +35,8 @@ export interface StoreSnapshot {
   /** Undo/redo availability for the *active* stack. */
   readonly canUndo: boolean;
   readonly canRedo: boolean;
+  /** Set when a row should receive focus; null otherwise. */
+  readonly focus: FocusRequest | null;
 }
 
 type IdGenerator = () => string;
@@ -49,6 +61,8 @@ export class AppStore {
   private activeStackId: string | null;
   private readonly listeners = new Set<() => void>();
   private snapshot: StoreSnapshot;
+  private focusRequest: FocusRequest | null = null;
+  private focusToken = 0;
 
   constructor(
     private readonly adapter: StorageAdapter,
@@ -165,7 +179,14 @@ export class AppStore {
     if (!this.activeStackId) return;
     const history = this.histories.get(this.activeStackId);
     if (!history) return;
-    this.histories.set(this.activeStackId, op(history));
+    const before = history.present;
+    const nextHistory = op(history);
+    this.histories.set(this.activeStackId, nextHistory);
+    // Move focus to the row that changed, so the user can keep typing there.
+    const changed = changedRowId(before, nextHistory.present);
+    if (changed !== null) {
+      this.focusRequest = { rowId: changed, token: ++this.focusToken };
+    }
     this.afterChange();
   }
 
@@ -200,6 +221,7 @@ export class AppStore {
       activeStackId: this.activeStackId,
       canUndo: active ? canUndo(active) : false,
       canRedo: active ? canRedo(active) : false,
+      focus: this.focusRequest,
     };
   }
 
@@ -216,4 +238,23 @@ export class AppStore {
   private emit(): void {
     for (const listener of this.listeners) listener();
   }
+}
+
+/** The id of the row that differs between two stack versions, if any. */
+function changedRowId(before: Stack, after: Stack): number | null {
+  const beforeById = new Map(before.rows.map((r) => [r.id, r]));
+  // A row that was added or edited in `after`.
+  for (const row of after.rows) {
+    const prev = beforeById.get(row.id);
+    if (!prev || prev.source !== row.source || prev.name !== row.name) {
+      return row.id;
+    }
+  }
+  // Otherwise a row was removed; focus whatever now sits at that position.
+  const afterIds = new Set(after.rows.map((r) => r.id));
+  const removedIndex = before.rows.findIndex((r) => !afterIds.has(r.id));
+  if (removedIndex >= 0 && after.rows.length > 0) {
+    return after.rows[Math.min(removedIndex, after.rows.length - 1)]!.id;
+  }
+  return null;
 }
