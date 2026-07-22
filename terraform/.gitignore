@@ -1,0 +1,16 @@
+# Local Terraform state (phase 1 of the bootstrap) and provider plugins.
+.terraform/
+*.tfstate
+*.tfstate.*
+crash.log
+crash.*.log
+
+# Secrets / var files — keep the example, ignore real ones.
+*.tfvars
+*.tfvars.json
+!*.tfvars.example
+
+# The phase-2 backend is committed as an .example; ignore it if activated.
+backend.tf
+
+# .terraform.lock.hcl is intentionally committed (provider version pinning).

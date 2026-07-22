@@ -1,0 +1,14 @@
+# Copy to terraform.tfvars (gitignored) and fill in. Prefer supplying the API
+# token via the environment instead of a file:
+#   export TF_VAR_cloudflare_api_token=...
+
+cloudflare_account_id = "your-cloudflare-account-id"
+github_owner          = "your-github-username"
+
+# Optional overrides (defaults shown):
+# domain             = "acalc.io"
+# pages_project_name = "acalc"
+# github_repo        = "acalc_ai"
+# production_branch  = "main"
+# state_bucket_name  = "acalc-tfstate"
+# r2_location        = "weur"

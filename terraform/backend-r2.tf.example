@@ -1,0 +1,33 @@
+# PHASE 2 of the bootstrap. After the first `terraform apply` has CREATED the R2
+# bucket (with local state), rename this file to `backend.tf`, fill in the account
+# id, and run:
+#
+#   AWS_ACCESS_KEY_ID=<r2-access-key> \
+#   AWS_SECRET_ACCESS_KEY=<r2-secret-key> \
+#   terraform init -migrate-state
+#
+# The R2 access/secret key pair is created under R2 -> "Manage R2 API Tokens"
+# (an S3-compatible credential, separate from the Cloudflare API token used by the
+# provider). Terraform's s3 backend talks to R2 over its S3-compatible endpoint.
+
+terraform {
+  backend "s3" {
+    bucket = "acalc-tfstate"
+    key    = "acalc/terraform.tfstate"
+    region = "auto"
+
+    endpoints = {
+      s3 = "https://<CLOUDFLARE_ACCOUNT_ID>.r2.cloudflarestorage.com"
+    }
+
+    # R2 isn't AWS — skip the AWS-specific preflight checks.
+    skip_credentials_validation = true
+    skip_metadata_api_check     = true
+    skip_region_validation      = true
+    skip_requesting_account_id  = true
+    use_path_style              = true
+
+    # Native lock-file in the bucket — no DynamoDB. Requires Terraform >= 1.10.
+    use_lockfile = true
+  }
+}
