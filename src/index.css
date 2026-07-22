@@ -1,7 +1,28 @@
 :root {
   color-scheme: light dark;
+  --bg: #ffffff;
+  --fg: #1a1a1a;
+  --muted: #6b7280;
+  --border: #e2e4e8;
+  --accent: #2563eb;
+  --error: #dc2626;
+  --result-bg: #f6f8fa;
+  --mono: ui-monospace, 'SF Mono', 'JetBrains Mono', Menlo, Consolas, monospace;
+
   font-family: ui-sans-serif, system-ui, -apple-system, sans-serif;
   line-height: 1.5;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #0d1117;
+    --fg: #e6edf3;
+    --muted: #8b949e;
+    --border: #30363d;
+    --accent: #4493f8;
+    --error: #f85149;
+    --result-bg: #161b22;
+  }
 }
 
 * {
@@ -11,14 +32,236 @@
 body {
   margin: 0;
   min-height: 100vh;
+  background: var(--bg);
+  color: var(--fg);
 }
 
 .app {
-  max-width: 48rem;
+  max-width: 52rem;
   margin: 0 auto;
-  padding: 2rem 1.5rem;
+  padding: 2rem 1.25rem 4rem;
+}
+
+.app-header h1 {
+  margin: 0;
+  font-size: 1.5rem;
+  letter-spacing: -0.02em;
 }
 
 .tagline {
+  margin: 0.25rem 0 0;
+  color: var(--muted);
+  font-size: 0.9rem;
+}
+
+/* --- tabs --- */
+.tabs {
+  display: flex;
+  gap: 0.25rem;
+  margin-top: 1.5rem;
+  border-bottom: 1px solid var(--border);
+  flex-wrap: wrap;
+}
+
+.tab {
+  border: none;
+  background: none;
+  color: var(--muted);
+  padding: 0.5rem 0.85rem;
+  font-size: 0.9rem;
+  cursor: pointer;
+  border-bottom: 2px solid transparent;
+  margin-bottom: -1px;
+}
+
+.tab:hover {
+  color: var(--fg);
+}
+
+.tab--active {
+  color: var(--fg);
+  border-bottom-color: var(--accent);
+  font-weight: 600;
+}
+
+.tab--add {
+  font-size: 1.1rem;
+  line-height: 1;
+  padding: 0.4rem 0.7rem;
+}
+
+/* --- toolbar --- */
+.toolbar {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  margin: 1rem 0 0.75rem;
+}
+
+.stack-name {
+  border: 1px solid transparent;
+  background: none;
+  color: var(--fg);
+  font-size: 1.05rem;
+  font-weight: 600;
+  padding: 0.3rem 0.4rem;
+  border-radius: 6px;
+  min-width: 8rem;
+}
+
+.stack-name:hover {
+  border-color: var(--border);
+}
+
+.stack-name:focus {
+  outline: none;
+  border-color: var(--accent);
+}
+
+.toolbar-spacer {
+  flex: 1;
+}
+
+.toolbar-btn {
+  border: 1px solid var(--border);
+  background: var(--bg);
+  color: var(--fg);
+  border-radius: 6px;
+  padding: 0.35rem 0.6rem;
+  cursor: pointer;
+  font-size: 0.95rem;
+}
+
+.toolbar-btn:hover:not(:disabled) {
+  border-color: var(--accent);
+}
+
+.toolbar-btn:disabled {
+  opacity: 0.4;
+  cursor: default;
+}
+
+.toolbar-btn--danger:hover:not(:disabled) {
+  border-color: var(--error);
+}
+
+/* --- rows --- */
+.stack {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+}
+
+.row {
+  display: grid;
+  grid-template-columns: 6rem 1fr 10rem auto;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.row-name {
+  font-family: var(--mono);
+  font-size: 0.85rem;
+  color: var(--muted);
+  border: 1px solid transparent;
+  background: none;
+  border-radius: 6px;
+  padding: 0.45rem 0.5rem;
+  text-align: right;
+  width: 100%;
+}
+
+.row-name::placeholder {
+  color: var(--muted);
   opacity: 0.7;
+}
+
+.row-name:hover {
+  border-color: var(--border);
+}
+
+.row-name:focus {
+  outline: none;
+  border-color: var(--accent);
+  color: var(--fg);
+}
+
+.row-name[aria-invalid='true'] {
+  border-color: var(--error);
+  color: var(--error);
+}
+
+.row-source {
+  font-family: var(--mono);
+  font-size: 1rem;
+  border: 1px solid var(--border);
+  background: var(--bg);
+  color: var(--fg);
+  border-radius: 6px;
+  padding: 0.5rem 0.6rem;
+  width: 100%;
+}
+
+.row-source:focus {
+  outline: none;
+  border-color: var(--accent);
+}
+
+.row-result {
+  font-family: var(--mono);
+  font-size: 1rem;
+  text-align: right;
+  padding: 0.5rem 0.6rem;
+  background: var(--result-bg);
+  border-radius: 6px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.row-result--error {
+  color: var(--error);
+  font-size: 0.8rem;
+  text-align: left;
+}
+
+.row-result--empty {
+  background: none;
+}
+
+.row-delete {
+  border: none;
+  background: none;
+  color: var(--muted);
+  font-size: 1.2rem;
+  line-height: 1;
+  cursor: pointer;
+  padding: 0.25rem 0.4rem;
+  border-radius: 6px;
+}
+
+.row-delete:hover {
+  color: var(--error);
+}
+
+.row-add {
+  align-self: flex-start;
+  margin-top: 0.5rem;
+  border: 1px dashed var(--border);
+  background: none;
+  color: var(--muted);
+  border-radius: 6px;
+  padding: 0.4rem 0.75rem;
+  cursor: pointer;
+  font-size: 0.9rem;
+}
+
+.row-add:hover {
+  color: var(--fg);
+  border-color: var(--accent);
+}
+
+.stack-empty {
+  color: var(--muted);
+  font-size: 0.9rem;
 }

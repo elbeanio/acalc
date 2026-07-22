@@ -1,10 +1,13 @@
+import { Calculator } from './ui/Calculator.tsx';
+
 export function App() {
   return (
     <main className="app">
-      <h1>acalc</h1>
-      <p className="tagline">
-        A keyboard-first calculator. Scaffold in place — engine and UI to follow.
-      </p>
+      <header className="app-header">
+        <h1>acalc</h1>
+        <p className="tagline">A keyboard-first calculator.</p>
+      </header>
+      <Calculator />
     </main>
   );
 }

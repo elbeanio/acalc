@@ -1,6 +1,8 @@
 import { StrictMode } from 'react';
 import { createRoot } from 'react-dom/client';
 import { App } from './App.tsx';
+import { AppStore, LocalStorageAdapter } from './state/index.ts';
+import { StoreProvider } from './ui/StoreProvider.tsx';
 import './index.css';
 
 const rootElement = document.getElementById('root');
@@ -8,8 +10,12 @@ if (!rootElement) {
   throw new Error('Root element #root not found');
 }
 
+const store = new AppStore(new LocalStorageAdapter());
+
 createRoot(rootElement).render(
   <StrictMode>
-    <App />
+    <StoreProvider store={store}>
+      <App />
+    </StoreProvider>
   </StrictMode>,
 );
