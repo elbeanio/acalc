@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { flushSync } from 'react-dom';
 import { computeStack } from '../engine/index.ts';
 import type { FocusRequest, Stack } from '../state/index.ts';
@@ -18,45 +18,66 @@ export function StackView({ stack, focusRequest }: StackViewProps) {
   const store = useStore();
   const results = useMemo(() => computeStack(stack.rows), [stack.rows]);
 
+  const containerRef = useRef<HTMLDivElement>(null);
   const handles = useRef(new Map<number, EditorHandle>());
+  // While set to a future time, editor blurs don't revert a row to typeset —
+  // used to protect programmatic focus moves (activate / undo) from the blur
+  // handler firing before the new focus lands.
+  const suppressBlurUntil = useRef(0);
 
-  /** Focus an already-mounted row, optionally putting the cursor at the end. */
-  const focusRow = (id: number, cursorToEnd = false): boolean => {
-    const handle = handles.current.get(id);
-    if (!handle) return false;
-    handle.focus(cursorToEnd);
-    return true;
+  // Exactly one row shows the CM6 editor at a time; the rest are typeset.
+  const [editingRowId, setEditingRowId] = useState<number | null>(
+    () => stack.rows[0]?.id ?? null,
+  );
+
+  /** Re-focus an already-mounted editor (used after a reorder). */
+  const focusRowSoon = (id: number) => {
+    requestAnimationFrame(() => handles.current.get(id)?.focus());
   };
 
   /**
-   * Focus a row on the next frame — after React (and StrictMode's mount/remount)
-   * has committed, so a just-added/re-added row's editor handle is registered.
+   * Put a row into edit mode. The editor autofocuses itself on mount, so
+   * flushSync here makes that focus land synchronously — safe before typing.
    */
-  const focusRowSoon = (id: number, cursorToEnd = false) => {
-    requestAnimationFrame(() => handles.current.get(id)?.focus(cursorToEnd));
+  const activate = (id: number) => {
+    suppressBlurUntil.current = Date.now() + 200;
+    flushSync(() => setEditingRowId(id));
   };
 
-  // After undo/redo, move focus to the changed row so typing continues there.
+  // On an actual tab switch, revert to the typeset view. A ref (rather than a
+  // mount flag) keeps StrictMode's double-invoke from triggering a false reset.
+  const prevStackId = useRef(stack.id);
   useEffect(() => {
-    if (focusRequest) focusRowSoon(focusRequest.rowId, true);
-    // Keyed on the request token so it fires once per undo/redo, not per edit.
+    if (prevStackId.current !== stack.id) {
+      prevStackId.current = stack.id;
+      setEditingRowId(null);
+    }
+  }, [stack.id]);
+
+  // After undo/redo, edit + focus the changed row so typing continues there.
+  useEffect(() => {
+    if (focusRequest) activate(focusRequest.rowId);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [focusRequest?.token]);
 
-  // Focus the first row when the app opens, so it's ready for the keyboard.
-  useEffect(() => {
-    const first = stack.rows[0];
-    if (first) focusRowSoon(first.id, true);
-    // Once, on initial mount only.
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  // When an editor loses focus to outside the stack, revert the row to typeset —
+  // unless a programmatic focus move is in flight.
+  const handleEditorBlur = () => {
+    setTimeout(() => {
+      if (Date.now() < suppressBlurUntil.current) return;
+      if (!containerRef.current?.contains(document.activeElement)) {
+        setEditingRowId(null);
+      }
+    }, 0);
+  };
 
   const addBelow = (index: number) => {
     const newId = stack.nextRowId; // insertRowAt will assign this id
-    // flushSync so the new row is mounted and its editor handle registered
-    // before we focus — synchronous, so fast typing after Enter can't race it.
-    flushSync(() => store.insertRowAt(stack.id, index + 1));
-    focusRow(newId);
+    suppressBlurUntil.current = Date.now() + 200;
+    flushSync(() => {
+      store.insertRowAt(stack.id, index + 1);
+      setEditingRowId(newId); // its editor autofocuses on mount
+    });
   };
 
   /** Reference options for a row's `$` autocomplete: every other row's value. */
@@ -64,15 +85,15 @@ export function StackView({ stack, focusRequest }: StackViewProps) {
     stack.rows
       .filter((r) => r.id !== selfId)
       .map((r) => {
-        const result = results.get(r.id);
+        const res = results.get(r.id);
         const detail =
-          result?.status === 'ok' ? `= ${result.value.toDisplay()}` : undefined;
+          res?.status === 'ok' ? `= ${res.value.toDisplay()}` : undefined;
         const ref = r.name ? `$${r.name}` : `$${r.id}`;
         return detail === undefined ? { ref } : { ref, detail };
       });
 
   return (
-    <div className="stack">
+    <div className="stack" ref={containerRef}>
       {stack.rows.length === 0 ? (
         <p className="stack-empty">No rows yet.</p>
       ) : (
@@ -82,6 +103,9 @@ export function StackView({ stack, focusRequest }: StackViewProps) {
             stackId={stack.id}
             row={row}
             result={results.get(row.id)}
+            editing={row.id === editingRowId}
+            onActivate={() => activate(row.id)}
+            onBlur={handleEditorBlur}
             registerHandle={(handle) => {
               if (handle) handles.current.set(row.id, handle);
               else handles.current.delete(row.id);
@@ -89,16 +113,20 @@ export function StackView({ stack, focusRequest }: StackViewProps) {
             onEnter={() => addBelow(index)}
             onArrowUp={() => {
               const prev = stack.rows[index - 1];
-              return prev ? focusRow(prev.id, true) : false;
+              if (!prev) return false;
+              activate(prev.id);
+              return true;
             }}
             onArrowDown={() => {
               const next = stack.rows[index + 1];
-              return next ? focusRow(next.id, true) : false;
+              if (!next) return false;
+              activate(next.id);
+              return true;
             }}
             onMoveUp={() => {
               if (index === 0) return false;
               store.moveRow(stack.id, row.id, index - 1);
-              focusRowSoon(row.id); // keep focus on the moved row
+              focusRowSoon(row.id);
               return true;
             }}
             onMoveDown={() => {
@@ -110,7 +138,7 @@ export function StackView({ stack, focusRequest }: StackViewProps) {
             onDeleteRow={() => {
               const neighbour = stack.rows[index + 1] ?? stack.rows[index - 1];
               store.deleteRow(stack.id, row.id);
-              if (neighbour) focusRowSoon(neighbour.id, true);
+              if (neighbour) activate(neighbour.id);
               return true;
             }}
             getCompletions={completionsFor(row.id)}

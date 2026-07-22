@@ -1,14 +1,21 @@
 import { test, expect, type Page } from '@playwright/test';
 
 // --- helpers ---------------------------------------------------------------
+// Rows are dual-mode: only the row being edited has a `.cm-content`; the rest
+// are typeset (`.row-rendered`). Helpers are row-scoped and click to edit.
 
-const editor = (page: Page, i: number) =>
-  page.locator('.row-editor .cm-content').nth(i);
-const result = (page: Page, i: number) => page.locator('.row-result').nth(i);
+const rowLoc = (page: Page, i: number) => page.locator('.row').nth(i);
+const result = (page: Page, i: number) => rowLoc(page, i).locator('.row-result');
 const rows = (page: Page) => page.locator('.row');
+/** The single currently-editing row's editor content. */
+const activeEditor = (page: Page) => page.locator('.cm-content');
+
+async function editRow(page: Page, i: number) {
+  await rowLoc(page, i).locator('.row-editor, .row-rendered').click();
+}
 
 async function typeInRow(page: Page, i: number, text: string) {
-  await editor(page, i).click();
+  await editRow(page, i);
   await page.keyboard.type(text);
 }
 
@@ -42,7 +49,7 @@ test('references an earlier row and ripples edits through the chain', async ({
   await expect(result(page, 0)).toHaveText('5');
   await expect(result(page, 1)).toHaveText('50');
 
-  await editor(page, 0).click();
+  await editRow(page, 0);
   await clearFocusedRow(page);
   await page.keyboard.type('2 + 8');
   await expect(result(page, 0)).toHaveText('10');
@@ -65,6 +72,19 @@ test('$ opens the reference autocomplete and inserts a reference', async ({
   await page.keyboard.press('Enter'); // accept the completion, not a new row
   await page.keyboard.type(' * 2');
   await expect(result(page, 1)).toHaveText('200');
+});
+
+test('blurred rows are typeset, and clicking one returns to the editor', async ({
+  page,
+}) => {
+  await typeInRow(page, 0, '1/2');
+  await page.keyboard.press('Enter'); // row 0 blurs → typeset
+
+  await expect(rowLoc(page, 0).locator('.katex')).toBeVisible();
+  await expect(rowLoc(page, 0).locator('.cm-content')).toHaveCount(0);
+
+  await editRow(page, 0); // click the typeset row
+  await expect(rowLoc(page, 0).locator('.cm-content')).toBeVisible();
 });
 
 test('Enter creates a new row and focuses it', async ({ page }) => {
@@ -100,7 +120,7 @@ test('arrow up moves to the row above with the cursor at the end', async ({
 });
 
 test('focuses the first row on load, ready to type', async ({ page }) => {
-  await expect(editor(page, 0)).toBeFocused();
+  await expect(activeEditor(page)).toBeFocused();
   await page.keyboard.type('7 * 6'); // no click needed
   await expect(result(page, 0)).toHaveText('42');
 });
@@ -132,9 +152,10 @@ test('undo moves focus to the changed row', async ({ page }) => {
   await page.keyboard.press('Enter');
   await page.keyboard.type('5'); // row 2 = "5"
 
-  await editor(page, 0).click(); // move focus away, to row 1
+  await editRow(page, 0); // move focus away, to row 1
   await page.keyboard.press('ControlOrMeta+z'); // undoes row 2's "5"
-  await page.keyboard.type('9'); // focus should have jumped to row 2
+  await expect(activeEditor(page)).toBeFocused(); // focus jumps to row 2
+  await page.keyboard.type('9');
 
   await expect(result(page, 1)).toHaveText('9');
   await expect(result(page, 0)).toHaveText('10'); // row 1 untouched

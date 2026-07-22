@@ -37,8 +37,11 @@ export interface ExpressionEditorProps {
   onMoveUp?: () => boolean;
   onMoveDown?: () => boolean;
   onDeleteRow?: () => boolean;
+  onBlur?: () => void;
   getCompletions: () => ReferenceOption[];
   registerHandle?: (handle: EditorHandle | null) => void;
+  /** Focus (cursor at end) as soon as the editor mounts. */
+  autoFocus?: boolean;
   ariaLabel?: string;
 }
 
@@ -120,6 +123,13 @@ export function ExpressionEditor(props: ExpressionEditorProps) {
       propsRef.current.onChange(update.state.doc.toString());
     });
 
+    const blurHandler = EditorView.domEventHandlers({
+      blur: () => {
+        propsRef.current.onBlur?.();
+        return false;
+      },
+    });
+
     const view = new EditorView({
       parent: parentRef.current!,
       state: EditorState.create({
@@ -133,6 +143,7 @@ export function ExpressionEditor(props: ExpressionEditorProps) {
           placeholder('expression…'),
           singleLine,
           updateListener,
+          blurHandler,
           EditorView.contentAttributes.of({
             'aria-label': propsRef.current.ariaLabel ?? 'Expression',
           }),
@@ -150,6 +161,14 @@ export function ExpressionEditor(props: ExpressionEditorProps) {
         view.focus();
       },
     });
+
+    // Focus on mount when requested. Because this runs in the editor's own
+    // creation effect, it's reliable regardless of external timing, and
+    // StrictMode's remount ends with the final view focused.
+    if (propsRef.current.autoFocus) {
+      view.dispatch({ selection: { anchor: view.state.doc.length } });
+      view.focus();
+    }
 
     return () => {
       propsRef.current.registerHandle?.(null);

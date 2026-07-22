@@ -7,12 +7,17 @@ import {
   type ReferenceOption,
 } from './editor/ExpressionEditor.tsx';
 import { formatResult } from './format.ts';
+import { RenderedExpression } from './RenderedExpression.tsx';
 import { useStore } from './useStore.ts';
 
 interface RowItemProps {
   stackId: string;
   row: Row;
   result: RowResult | undefined;
+  /** True when this row shows the editor; false shows the typeset view. */
+  editing: boolean;
+  onActivate: () => void;
+  onBlur: () => void;
   registerHandle: (handle: EditorHandle | null) => void;
   onEnter: () => void;
   onArrowUp: () => boolean;
@@ -27,6 +32,9 @@ export function RowItem({
   stackId,
   row,
   result,
+  editing,
+  onActivate,
+  onBlur,
   registerHandle,
   onEnter,
   onArrowUp,
@@ -76,19 +84,29 @@ export function RowItem({
           }
         }}
       />
-      <ExpressionEditor
-        value={row.source}
-        ariaLabel={`Expression for row ${row.id}`}
-        onChange={(source) => store.updateRowSource(stackId, row.id, source)}
-        onEnter={onEnter}
-        onArrowUp={onArrowUp}
-        onArrowDown={onArrowDown}
-        onMoveUp={onMoveUp}
-        onMoveDown={onMoveDown}
-        onDeleteRow={onDeleteRow}
-        getCompletions={getCompletions}
-        registerHandle={registerHandle}
-      />
+      {editing ? (
+        <ExpressionEditor
+          value={row.source}
+          autoFocus
+          ariaLabel={`Expression for row ${row.id}`}
+          onChange={(source) => store.updateRowSource(stackId, row.id, source)}
+          onEnter={onEnter}
+          onArrowUp={onArrowUp}
+          onArrowDown={onArrowDown}
+          onMoveUp={onMoveUp}
+          onMoveDown={onMoveDown}
+          onDeleteRow={onDeleteRow}
+          onBlur={onBlur}
+          getCompletions={getCompletions}
+          registerHandle={registerHandle}
+        />
+      ) : (
+        <RenderedExpression
+          source={row.source}
+          onActivate={onActivate}
+          ariaLabel={`Expression for row ${row.id}, click to edit`}
+        />
+      )}
       <output className={`row-result row-result--${fmt.kind}`} title={fmt.title}>
         {fmt.text}
       </output>
