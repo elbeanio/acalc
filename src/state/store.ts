@@ -4,6 +4,7 @@ import {
   initHistory,
   pushHistory,
   redo,
+  replacePresent,
   undo,
   type History,
 } from './history.ts';
@@ -40,8 +41,13 @@ export interface StoreSnapshot {
 }
 
 type IdGenerator = () => string;
+type Clock = () => number;
 
 const defaultIdGenerator: IdGenerator = () => globalThis.crypto.randomUUID();
+const defaultClock: Clock = () => Date.now();
+
+/** Consecutive edits to one row within this window merge into one undo step. */
+const COALESCE_MS = 500;
 
 /**
  * Central application store.
@@ -63,10 +69,13 @@ export class AppStore {
   private snapshot: StoreSnapshot;
   private focusRequest: FocusRequest | null = null;
   private focusToken = 0;
+  /** Tracks the last edit so consecutive same-row edits can be coalesced. */
+  private lastEdit: { stackId: string; rowId: number; at: number } | null = null;
 
   constructor(
     private readonly adapter: StorageAdapter,
     private readonly genId: IdGenerator = defaultIdGenerator,
+    private readonly now: Clock = defaultClock,
   ) {
     const loaded = deserialize(adapter.load());
     const initial = loaded ?? createInitialState(this.genId());
@@ -100,7 +109,21 @@ export class AppStore {
   }
 
   updateRowSource(stackId: string, rowId: number, source: string): void {
-    this.mutate(stackId, (s) => ops.updateRowSource(s, rowId, source));
+    const history = this.histories.get(stackId);
+    if (!history) throw new StateError(`No stack "${stackId}"`);
+    const at = this.now();
+    const coalesce =
+      this.lastEdit !== null &&
+      this.lastEdit.stackId === stackId &&
+      this.lastEdit.rowId === rowId &&
+      at - this.lastEdit.at < COALESCE_MS;
+    const next = ops.updateRowSource(history.present, rowId, source);
+    this.histories.set(
+      stackId,
+      coalesce ? replacePresent(history, next) : pushHistory(history, next),
+    );
+    this.lastEdit = { stackId, rowId, at };
+    this.afterChange();
   }
 
   /** May throw {@link StateError} on an invalid/duplicate name. */
@@ -129,6 +152,7 @@ export class AppStore {
     this.histories.set(id, initHistory(ops.createStack(id, name)));
     this.order.push(id);
     this.activeStackId = id;
+    this.lastEdit = null;
     this.afterChange();
     return id;
   }
@@ -142,12 +166,14 @@ export class AppStore {
       this.histories.set(id, initHistory(ops.createStack(id, 'Untitled')));
       this.order.push(id);
     }
+    this.lastEdit = null;
     this.afterChange();
   }
 
   setActiveStack(stackId: string): void {
     if (stackId === this.activeStackId) return;
     this.activeStackId = stackId;
+    this.lastEdit = null;
     this.reconcileActive();
     this.snapshot = this.computeSnapshot();
     this.persist();
@@ -170,6 +196,7 @@ export class AppStore {
     const history = this.histories.get(stackId);
     if (!history) throw new StateError(`No stack "${stackId}"`);
     this.histories.set(stackId, pushHistory(history, fn(history.present)));
+    this.lastEdit = null; // any non-edit action ends the coalescing burst
     this.afterChange();
   }
 
@@ -187,6 +214,7 @@ export class AppStore {
     if (changed !== null) {
       this.focusRequest = { rowId: changed, token: ++this.focusToken };
     }
+    this.lastEdit = null;
     this.afterChange();
   }
 

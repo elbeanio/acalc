@@ -23,6 +23,14 @@ export function pushHistory<T>(history: History<T>, next: T): History<T> {
   return { past, present: next, future: [] };
 }
 
+/**
+ * Replace the present without adding a past entry (and clear redo). Used to
+ * coalesce a burst of edits — e.g. consecutive keystrokes — into one undo step.
+ */
+export function replacePresent<T>(history: History<T>, next: T): History<T> {
+  return { past: history.past, present: next, future: [] };
+}
+
 export function undo<T>(history: History<T>): History<T> {
   if (history.past.length === 0) return history;
   const present = history.past[history.past.length - 1]!;

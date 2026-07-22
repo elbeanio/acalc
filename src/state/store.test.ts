@@ -63,8 +63,10 @@ describe('AppStore: persistence', () => {
 
 describe('AppStore: per-stack undo/redo', () => {
   it('undoes and redoes edits within a stack', () => {
-    const { store } = newStore();
+    let time = 0;
+    const store = new AppStore(new MemoryStorageAdapter(), seededIds(), () => time);
     store.updateRowSource('stack-1', 1, 'first');
+    time += 1000; // separate edits so they are distinct undo steps
     store.updateRowSource('stack-1', 1, 'second');
     expect(store.getSnapshot().canUndo).toBe(true);
 
@@ -119,6 +121,43 @@ describe('AppStore: per-stack undo/redo', () => {
     const second = store.getSnapshot().focus;
     expect(second?.rowId).toBe(2);
     expect(second!.token).toBeGreaterThan(first!.token);
+  });
+
+  it('coalesces a burst of same-row edits into one undo step', () => {
+    let time = 1000;
+    const store = new AppStore(new MemoryStorageAdapter(), seededIds(), () => time);
+    store.updateRowSource('stack-1', 1, '1');
+    time += 100;
+    store.updateRowSource('stack-1', 1, '12');
+    time += 100;
+    store.updateRowSource('stack-1', 1, '123');
+
+    store.undo(); // one step undoes the whole burst
+    expect(activeRows(store)[0]?.source).toBe('');
+    expect(store.getSnapshot().canUndo).toBe(false);
+  });
+
+  it('does not coalesce edits separated by a pause', () => {
+    let time = 1000;
+    const store = new AppStore(new MemoryStorageAdapter(), seededIds(), () => time);
+    store.updateRowSource('stack-1', 1, 'a');
+    time += 800; // beyond the coalesce window
+    store.updateRowSource('stack-1', 1, 'ab');
+
+    store.undo();
+    expect(activeRows(store)[0]?.source).toBe('a');
+  });
+
+  it('does not coalesce edits to different rows', () => {
+    const time = 1000;
+    const store = new AppStore(new MemoryStorageAdapter(), seededIds(), () => time);
+    store.addRow('stack-1'); // row 2
+    store.updateRowSource('stack-1', 1, 'a');
+    store.updateRowSource('stack-1', 2, 'b');
+
+    store.undo(); // undoes only row 2
+    expect(activeRows(store)[1]?.source).toBe('');
+    expect(activeRows(store)[0]?.source).toBe('a');
   });
 
   it('reflects undo availability for the active stack only', () => {
