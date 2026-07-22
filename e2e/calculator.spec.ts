@@ -201,3 +201,125 @@ test('persists calculations across a reload', async ({ page }) => {
   await page.reload();
   await expect(result(page, 0)).toHaveText('42');
 });
+
+// --- more coverage ---------------------------------------------------------
+
+test('redo re-applies an undone edit', async ({ page }) => {
+  await typeInRow(page, 0, '5');
+  await page.keyboard.press('ControlOrMeta+z'); // undo the burst → empty
+  await expect(result(page, 0)).toHaveText('');
+  await page.keyboard.press('ControlOrMeta+Shift+z'); // redo
+  await expect(result(page, 0)).toHaveText('5');
+});
+
+test('Alt+ArrowDown moves a row down', async ({ page }) => {
+  await typeInRow(page, 0, '1');
+  await page.keyboard.press('Enter');
+  await page.keyboard.type('2'); // rows: [1, 2]
+  await page.keyboard.press('ArrowUp'); // focus row "1"
+  await page.keyboard.press('Alt+ArrowDown'); // move it below "2"
+  await expect(result(page, 0)).toHaveText('2');
+  await expect(result(page, 1)).toHaveText('1');
+});
+
+test('references a row by its name', async ({ page }) => {
+  await typeInRow(page, 0, '100');
+  await rowLoc(page, 0).locator('.row-name').fill('price');
+  await rowLoc(page, 0).locator('.row-name').press('Enter');
+
+  await page.getByText('+ Add row').click();
+  await typeInRow(page, 1, '$price * 2');
+  await expect(result(page, 1)).toHaveText('200');
+});
+
+test('deleting a referenced row leaves its dependent dangling', async ({
+  page,
+}) => {
+  await typeInRow(page, 0, '50');
+  await page.getByText('+ Add row').click();
+  await typeInRow(page, 1, '$1 + 1');
+  await expect(result(page, 1)).toHaveText('51');
+
+  await rowLoc(page, 0).locator('.row-delete').click();
+  await expect(rows(page)).toHaveCount(1);
+  await expect(result(page, 0)).toHaveText('#ref!($1)');
+});
+
+test('detects a circular reference', async ({ page }) => {
+  await typeInRow(page, 0, '$2');
+  await page.getByText('+ Add row').click();
+  await typeInRow(page, 1, '$1');
+  await expect(result(page, 0)).toHaveText('Circular reference');
+  await expect(result(page, 1)).toHaveText('Circular reference');
+});
+
+test('percent and modulo evaluate correctly', async ({ page }) => {
+  await typeInRow(page, 0, '200 + 10%');
+  await expect(result(page, 0)).toHaveText('200.1');
+
+  await editRow(page, 0);
+  await clearFocusedRow(page);
+  await page.keyboard.type('10 % 3');
+  await expect(result(page, 0)).toHaveText('1');
+});
+
+test('keeps full precision in the result tooltip', async ({ page }) => {
+  await typeInRow(page, 0, '2 / 3');
+  await expect(result(page, 0)).toHaveText('0.666666666667'); // 12 sig figs
+  // The title carries the full-precision value (far more digits).
+  await expect(result(page, 0)).toHaveAttribute('title', /^0\.6{20}/);
+});
+
+test('clicking outside a row switches it to the typeset view', async ({
+  page,
+}) => {
+  await typeInRow(page, 0, '1/2');
+  await page.locator('.app-header h1').click(); // focus leaves the stack
+  await expect(rowLoc(page, 0).locator('.katex')).toBeVisible();
+  await expect(rowLoc(page, 0).locator('.cm-content')).toHaveCount(0);
+});
+
+test('typesets a division as a KaTeX fraction', async ({ page }) => {
+  await typeInRow(page, 0, '1/2');
+  await page.keyboard.press('Enter'); // blur row 0
+  const rendered = rowLoc(page, 0);
+  await expect(rendered.locator('.katex')).toBeVisible();
+  await expect(rendered.locator('.mfrac')).toBeVisible();
+});
+
+test('stacks keep independent content', async ({ page }) => {
+  await typeInRow(page, 0, '111');
+  await page.getByRole('button', { name: 'New stack' }).click();
+  await typeInRow(page, 0, '222');
+  await expect(result(page, 0)).toHaveText('222');
+
+  await page.getByRole('tab').first().click();
+  await expect(result(page, 0)).toHaveText('111');
+  await page.getByRole('tab').nth(1).click();
+  await expect(result(page, 0)).toHaveText('222');
+});
+
+test('deleting the only row shows the empty state', async ({ page }) => {
+  await typeInRow(page, 0, '5');
+  await rowLoc(page, 0).locator('.row-delete').click();
+  await expect(rows(page)).toHaveCount(0);
+  await expect(page.getByText('No rows yet.')).toBeVisible();
+  await page.getByText('+ Add row').click();
+  await expect(rows(page)).toHaveCount(1);
+});
+
+test('editing a middle row ripples to all dependents', async ({ page }) => {
+  await typeInRow(page, 0, '10');
+  await page.keyboard.press('Enter');
+  await page.keyboard.type('$1 * 2'); // row 2 = 20
+  await page.keyboard.press('Enter');
+  await page.keyboard.type('$2 + 5'); // row 3 = 25
+  await expect(result(page, 1)).toHaveText('20');
+  await expect(result(page, 2)).toHaveText('25');
+
+  await editRow(page, 0);
+  await clearFocusedRow(page);
+  await page.keyboard.type('100');
+  await expect(result(page, 1)).toHaveText('200');
+  await expect(result(page, 2)).toHaveText('205');
+});
