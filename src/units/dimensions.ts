@@ -66,6 +66,19 @@ export function dimPow(a: Dimension, n: number): Dimension {
   return mapAxes((axis) => a[axis] * n);
 }
 
+/**
+ * Currency, information and temperature are "amounts" — you can scale, add and
+ * form rates (£/month, MB/s), but a squared one (byte², money²) is nonsense.
+ * So their exponents must stay within ±1.
+ */
+export function isSensibleDimension(d: Dimension): boolean {
+  return (
+    Math.abs(d.currency) <= 1 &&
+    Math.abs(d.information) <= 1 &&
+    Math.abs(d.temperature) <= 1
+  );
+}
+
 /** Render a dimension as a base-unit label, e.g. `m/s`, `m^2`, `kg·m/s^2`. */
 export function dimToBaseLabel(d: Dimension): string {
   const num: string[] = [];

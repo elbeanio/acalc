@@ -7,6 +7,7 @@ import {
   dimPow,
   dimToBaseLabel,
   isDimensionless,
+  isSensibleDimension,
   type Dimension,
 } from './dimensions.ts';
 
@@ -89,7 +90,7 @@ export class Quantity {
   mul(other: Quantity): Quantity {
     return new Quantity(
       this.base.mul(other.base),
-      dimMul(this.dimension, other.dimension),
+      sensible(dimMul(this.dimension, other.dimension)),
       combineMul(this, other),
     );
   }
@@ -97,7 +98,7 @@ export class Quantity {
   div(other: Quantity): Quantity {
     return new Quantity(
       this.base.div(other.base),
-      dimDiv(this.dimension, other.dimension),
+      sensible(dimDiv(this.dimension, other.dimension)),
       combineDiv(this, other),
     );
   }
@@ -105,7 +106,7 @@ export class Quantity {
   pow(exponent: Num): Quantity {
     const base = this.base.pow(exponent);
     if (this.isDimensionless()) return Quantity.scalar(base);
-    const dimension = dimPow(this.dimension, exponent.toNumber());
+    const dimension = sensible(dimPow(this.dimension, exponent.toNumber()));
     const display =
       this.display && exponent.isInteger()
         ? {
@@ -186,6 +187,14 @@ export class UnitError extends Error {
     super(message);
     this.name = 'UnitError';
   }
+}
+
+/** Reject nonsense dimensions like byte² or money² (see isSensibleDimension). */
+function sensible(d: Dimension): Dimension {
+  if (!isSensibleDimension(d)) {
+    throw new UnitError(`${dimToBaseLabel(d)} isn't a meaningful quantity`);
+  }
+  return d;
 }
 
 function combineMul(a: Quantity, b: Quantity): DisplayUnit | null {

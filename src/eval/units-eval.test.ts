@@ -78,6 +78,19 @@ describe('units: conversion (to / in)', () => {
   });
 });
 
+describe('units: amounts do not square', () => {
+  it('rejects a square gigabyte / square money / square temperature', () => {
+    expect(() => run('2 GB * 3 GB')).toThrow(/meaningful/);
+    expect(() => run('5 GBP * 2 GBP')).toThrow(/meaningful/);
+    expect(() => run('20c * 20c')).toThrow(/meaningful/);
+  });
+
+  it('but rates and scaling are fine', () => {
+    expect(run('100 MB / s')).toBe('100MB/s');
+    expect(run('20 GB / 4')).toBe('5GB');
+  });
+});
+
 describe('units: angles', () => {
   it('degrees work in trig', () => {
     expect(run('sin(90 deg)')).toBe('1');

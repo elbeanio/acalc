@@ -87,6 +87,9 @@ unitFactor = ( UNIT | "(" unitExpr ")" ) ( "^" NUMBER )? ;
   It is affine: conversions are correct (`20c in f` = `68°F`), but adding two
   temperatures adds absolute kelvin values.
 - Units render next to the number with no space (`5.3km`, `68°F`).
+- Currency, data and temperature are *amounts*: scale/add/convert and rates
+  (`£/month`, `MB/s`) are fine, but a square (`byte²`, `money²`) is an error —
+  there's no such thing as a square gigabyte.
 
 ## Lexical grammar (tokens)
 
