@@ -14,20 +14,20 @@ const perHour = (name: string) =>
   Quantity.fromUnit(Num.ONE, unit(name)).div(Quantity.fromUnit(Num.ONE, unit('h')));
 
 describe('Quantity display', () => {
-  it('renders a value with its unit', () => {
-    expect(q('5', 'km').toDisplay()).toBe('5 km');
-    expect(q('30', 'cm').toDisplay()).toBe('30 cm');
+  it('renders a value with its unit next to the number', () => {
+    expect(q('5', 'km').toDisplay()).toBe('5km');
+    expect(q('30', 'cm').toDisplay()).toBe('30cm');
   });
 
-  it('renders currency with a prefix symbol', () => {
-    expect(q('40', '£').toDisplay()).toBe('£40');
-    expect(q('40', 'USD').toDisplay()).toBe('40 USD');
+  it('renders currency as a postfix ISO code', () => {
+    expect(q('40', '£').toDisplay()).toBe('40GBP');
+    expect(q('40', 'USD').toDisplay()).toBe('40USD');
   });
 });
 
 describe('Quantity arithmetic', () => {
   it('adds compatible units, keeping the left unit', () => {
-    expect(q('5', 'km').add(q('300', 'm')).toDisplay()).toBe('5.3 km');
+    expect(q('5', 'km').add(q('300', 'm')).toDisplay()).toBe('5.3km');
   });
 
   it('rejects adding incompatible dimensions', () => {
@@ -35,28 +35,28 @@ describe('Quantity arithmetic', () => {
   });
 
   it('keeps the unit through scalar multiplication', () => {
-    expect(Quantity.scalar(Num.of('3')).mul(q('5', 'km')).toDisplay()).toBe('15 km');
-    expect(q('40', '£').mul(Quantity.scalar(Num.of('1.2'))).toDisplay()).toBe('£48');
+    expect(Quantity.scalar(Num.of('3')).mul(q('5', 'km')).toDisplay()).toBe('15km');
+    expect(q('40', '£').mul(Quantity.scalar(Num.of('1.2'))).toDisplay()).toBe('48GBP');
   });
 
   it('powers produce a ^ label', () => {
-    expect(q('2', 'm').pow(Num.of('2')).toDisplay()).toBe('4 m^2');
+    expect(q('2', 'm').pow(Num.of('2')).toDisplay()).toBe('4m^2');
   });
 });
 
 describe('Quantity conversion', () => {
   it('converts length', () => {
-    expect(q('5', 'km').convertTo(q('1', 'm')).toDisplay()).toBe('5000 m');
-    expect(q('30', 'cm').convertTo(q('1', 'inch')).toDisplay()).toBe('11.811023622 in');
+    expect(q('5', 'km').convertTo(q('1', 'm')).toDisplay()).toBe('5000m');
+    expect(q('30', 'cm').convertTo(q('1', 'inch')).toDisplay()).toBe('11.811023622in');
   });
 
   it('converts speed to a compound unit', () => {
-    expect(q('50', 'mph').convertTo(perHour('km')).toDisplay()).toBe('80.4672 km/h');
+    expect(q('50', 'mph').convertTo(perHour('km')).toDisplay()).toBe('80.4672km/h');
   });
 
   it('converts temperature (affine)', () => {
-    expect(q('20', 'C').convertTo(q('1', 'F')).toDisplay()).toBe('68 °F');
-    expect(q('100', 'C').convertTo(q('1', 'K')).toDisplay()).toBe('373.15 K');
+    expect(q('20', 'C').convertTo(q('1', 'F')).toDisplay()).toBe('68°F');
+    expect(q('100', 'C').convertTo(q('1', 'K')).toDisplay()).toBe('373.15K');
   });
 
   it('rejects converting between dimensions', () => {

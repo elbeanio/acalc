@@ -59,14 +59,14 @@ const SECTIONS: Section[] = [
   {
     title: 'Units',
     entries: [
-      { syntax: '5 km + 300 m', meaning: 'mix compatible units', example: '= 5.3 km' },
-      { syntax: 'x to unit  ·  x in unit', meaning: 'convert', example: '50 mph in km/h = 80.4672 km/h' },
+      { syntax: '5 km + 300 m', meaning: 'mix compatible units', example: '= 5.3km' },
+      { syntax: 'x to unit  ·  x in unit', meaning: 'convert', example: '50 mph in km/h = 80.4672km/h' },
       { syntax: 'length / mass / time', meaning: 'km, mi, ft, kg, lb, s, h, day…' },
-      { syntax: 'temperature', meaning: '°C, °F, K', example: '20°C in °F = 68 °F' },
-      { syntax: 'data', meaning: 'KB, MB, GB, KiB, MiB…', example: '1 GiB in MB = 1073.741824 MB' },
+      { syntax: 'temperature', meaning: 'C, F, K (or °C, °F)', example: '20c in f = 68°F' },
+      { syntax: 'data', meaning: 'KB, MB, GB, KiB, MiB…', example: '1 GiB in MB = 1073.741824MB' },
       { syntax: 'angles', meaning: 'deg, rad — trig takes degrees', example: 'sin(90 deg) = 1' },
-      { syntax: 'currency', meaning: '£ € ¥, USD/EUR… (static rates)', example: '£40 * 1.2 = £48' },
-      { syntax: 'dollars = USD', meaning: '$ is the reference sigil, so write USD not $' },
+      { syntax: 'currency (postfix)', meaning: 'GBP, USD, EUR… (static rates)', example: '40 USD in GBP = 31.6GBP' },
+      { syntax: 'no $ prefix', meaning: '$ is the reference sigil — write 40 USD, not $40' },
     ],
   },
   {

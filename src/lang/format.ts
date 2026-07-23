@@ -93,7 +93,7 @@ function renderInner(node: Node): string {
     case 'unit':
       return node.name;
     case 'quantity':
-      return `${render(node.value, PREC.postfix)} ${renderUnit(node.unit)}`;
+      return `${render(node.value, PREC.postfix)}${renderUnit(node.unit)}`;
     case 'convert':
       return `${render(node.value, 0)} to ${renderUnit(node.unit)}`;
   }

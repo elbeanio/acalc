@@ -25,7 +25,6 @@ interface UnitDef {
   factor: Num | string;
   offset?: Num | string;
   symbol?: string;
-  prefix?: boolean;
 }
 
 const DEFS: UnitDef[] = [
@@ -61,10 +60,10 @@ const DEFS: UnitDef[] = [
   { names: ['month', 'months'], dimension: TIME, factor: '2629800' },
   { names: ['year', 'years', 'yr', 'yrs'], dimension: TIME, factor: '31557600' },
 
-  // Temperature (base: K) — affine
-  { names: ['K', 'kelvin'], dimension: TEMP, factor: '1' },
-  { names: ['C', '°C', 'celsius', 'centigrade'], dimension: TEMP, factor: '1', offset: '273.15', symbol: '°C' },
-  { names: ['F', '°F', 'fahrenheit'], dimension: TEMP, factor: Num.of('5').div(Num.of('9')), offset: F_OFFSET, symbol: '°F' },
+  // Temperature (base: K) — affine. Lowercase aliases so "20c in f" works.
+  { names: ['K', 'k', 'kelvin'], dimension: TEMP, factor: '1' },
+  { names: ['C', '°C', 'c', 'celsius', 'centigrade'], dimension: TEMP, factor: '1', offset: '273.15', symbol: '°C' },
+  { names: ['F', '°F', 'f', 'fahrenheit'], dimension: TEMP, factor: Num.of('5').div(Num.of('9')), offset: F_OFFSET, symbol: '°F' },
 
   // Angle (dimensionless)
   { names: ['rad', 'radian', 'radians'], dimension: NONE, factor: '1' },
@@ -85,11 +84,12 @@ const DEFS: UnitDef[] = [
   { names: ['GiB', 'gibibyte'], dimension: INFO, factor: '1073741824' },
   { names: ['TiB', 'tebibyte'], dimension: INFO, factor: '1099511627776' },
 
-  // Currency (base: GBP) — STATIC approximate rates (GBP per unit)
-  { names: ['GBP', '£', 'gbp'], dimension: CURRENCY, factor: '1', symbol: '£', prefix: true },
+  // Currency (base: GBP) — STATIC approximate rates (GBP per unit). Postfix
+  // codes; symbols (£/€/¥) are accepted as input but display as the ISO code.
+  { names: ['GBP', '£', 'gbp'], dimension: CURRENCY, factor: '1', symbol: 'GBP' },
   { names: ['USD', 'usd'], dimension: CURRENCY, factor: '0.79', symbol: 'USD' },
-  { names: ['EUR', '€', 'eur'], dimension: CURRENCY, factor: '0.85', symbol: '€', prefix: true },
-  { names: ['JPY', '¥', 'jpy'], dimension: CURRENCY, factor: '0.0053', symbol: '¥', prefix: true },
+  { names: ['EUR', '€', 'eur'], dimension: CURRENCY, factor: '0.85', symbol: 'EUR' },
+  { names: ['JPY', '¥', 'jpy'], dimension: CURRENCY, factor: '0.0053', symbol: 'JPY' },
   { names: ['CHF', 'chf'], dimension: CURRENCY, factor: '0.88', symbol: 'CHF' },
   { names: ['AUD', 'aud'], dimension: CURRENCY, factor: '0.52', symbol: 'AUD' },
   { names: ['CAD', 'cad'], dimension: CURRENCY, factor: '0.58', symbol: 'CAD' },
@@ -110,7 +110,6 @@ for (const def of DEFS) {
     factor: def.factor instanceof Num ? def.factor : Num.of(def.factor),
     offset: def.offset === undefined ? ZERO : def.offset instanceof Num ? def.offset : Num.of(def.offset),
     symbol: def.symbol ?? def.names[0]!,
-    ...(def.prefix ? { prefix: true } : {}),
   };
   for (const name of def.names) REGISTRY.set(name, unit);
 }
@@ -119,6 +118,3 @@ for (const def of DEFS) {
 export function lookupUnit(name: string): ResolvedUnit | null {
   return REGISTRY.get(name) ?? null;
 }
-
-/** Currency symbols that may prefix a value ($ is excluded — it's the ref sigil). */
-export const CURRENCY_PREFIX_SYMBOLS = new Set(['£', '€', '¥']);

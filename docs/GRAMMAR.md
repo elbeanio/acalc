@@ -80,10 +80,13 @@ unitFactor = ( UNIT | "(" unitExpr ")" ) ( "^" NUMBER )? ;
   (°C/°F/K, affine), digital storage (KB…/KiB…), angles (deg/rad — trig accepts
   degrees), and currency (£/€/¥ + ISO codes, **static approximate rates**).
 - `in` is the conversion keyword, so **inches** are written `inch`/`inches`.
-- `$` is the reference sigil, so **dollars** are written `USD` (not `$`).
-  Currency symbols `£`/`€`/`¥` may prefix a value (`£40`).
-- Temperature is affine: conversions are correct (`20°C in °F` = `68 °F`), but
-  adding two temperatures adds absolute kelvin values.
+- **Currency is postfix only** — `40 USD`, `10 GBP` (symbols `£`/`€`/`¥` are
+  accepted as input but display as the ISO code). `$` is the reference sigil, so
+  there is no `$40` prefix form; write `40 USD`.
+- Temperature accepts lowercase aliases: `20c in f` works (as do `°C`/`°F`).
+  It is affine: conversions are correct (`20c in f` = `68°F`), but adding two
+  temperatures adds absolute kelvin values.
+- Units render next to the number with no space (`5.3km`, `68°F`).
 
 ## Lexical grammar (tokens)
 

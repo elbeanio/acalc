@@ -265,18 +265,17 @@ test('computes factorial', async ({ page }) => {
 
 test('computes with units and converts', async ({ page }) => {
   await typeInRow(page, 0, '5 km + 300 m');
-  await expect(result(page, 0)).toHaveText('5.3 km');
+  await expect(result(page, 0)).toHaveText('5.3km');
 
   await editRow(page, 0);
   await clearFocusedRow(page);
   await page.keyboard.type('50 mph in km/h');
-  await expect(result(page, 0)).toHaveText('80.4672 km/h');
+  await expect(result(page, 0)).toHaveText('80.4672km/h');
 
   await editRow(page, 0);
   await clearFocusedRow(page);
-  await page.keyboard.type('20');
-  await page.keyboard.type('°C in °F'); // 20°C in °F
-  await expect(result(page, 0)).toHaveText('68 °F');
+  await page.keyboard.type('20c in f'); // lowercase temperature
+  await expect(result(page, 0)).toHaveText('68°F');
 });
 
 test('percent and modulo evaluate correctly', async ({ page }) => {

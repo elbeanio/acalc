@@ -1,4 +1,4 @@
-import { CURRENCY_PREFIX_SYMBOLS, lookupUnit } from '../units/index.ts';
+import { lookupUnit } from '../units/index.ts';
 import type { Node, RefTarget } from './ast.ts';
 import { ParseError } from './errors.ts';
 import { tokenize } from './lexer.ts';
@@ -145,17 +145,6 @@ class Parser {
         if (this.peek().type === 'lparen') {
           return { type: 'call', name, args: this.parseArguments() };
         }
-        // Currency symbol before a value, e.g. £40 (note: $ is the ref sigil).
-        if (
-          CURRENCY_PREFIX_SYMBOLS.has(name) &&
-          this.startsPrefixValue(this.peek().type)
-        ) {
-          return {
-            type: 'quantity',
-            value: this.parsePower(),
-            unit: { type: 'unit', name },
-          };
-        }
         if (lookupUnit(name)) return { type: 'unit', name };
         return { type: 'identifier', name };
       }
@@ -257,10 +246,6 @@ class Parser {
     if (!next) return false;
     if (next.type === 'lparen') return true;
     return next.type === 'ident' && lookupUnit(next.value) !== null;
-  }
-
-  private startsPrefixValue(type: TokenType): boolean {
-    return type === 'number' || type === 'lparen' || type === 'ref';
   }
 
   /** True when the `%` at the cursor is infix modulo (an operand follows it). */

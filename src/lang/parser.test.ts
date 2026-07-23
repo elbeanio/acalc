@@ -114,9 +114,9 @@ describe('parser: units', () => {
     expect(sx('5 km to m')).toBe('(conv (qty 5 km) m)');
   });
 
-  it('currency prefix and suffix', () => {
-    expect(sx('£40')).toBe('(qty 40 £)');
+  it('currency is postfix (no prefix — $ is the ref sigil)', () => {
     expect(sx('40 GBP')).toBe('(qty 40 GBP)');
+    expect(sx('40£')).toBe('(qty 40 £)');
   });
 
   it('a number times a bare unit still parses', () => {

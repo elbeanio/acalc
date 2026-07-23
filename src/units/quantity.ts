@@ -15,8 +15,6 @@ export interface DisplayUnit {
   readonly label: string;
   readonly factor: Num;
   readonly offset: Num;
-  /** Currency symbols render before the number ($48), everything else after. */
-  readonly prefix: boolean;
 }
 
 /** A resolved unit atom (from the units table), e.g. km, °C, mph. */
@@ -25,7 +23,6 @@ export interface ResolvedUnit {
   readonly factor: Num;
   readonly offset: Num;
   readonly symbol: string;
-  readonly prefix?: boolean;
 }
 
 /**
@@ -51,7 +48,6 @@ export class Quantity {
       label: unit.symbol,
       factor: unit.factor,
       offset: unit.offset,
-      prefix: unit.prefix ?? false,
     });
   }
 
@@ -116,7 +112,6 @@ export class Quantity {
             label: `${this.display.label}^${exponent.toString()}`,
             factor: this.display.factor.pow(exponent),
             offset: Num.ZERO,
-            prefix: false,
           }
         : null;
     return new Quantity(base, dimension, display);
@@ -124,7 +119,11 @@ export class Quantity {
 
   /** Adopt `target`'s display unit (for `to` / `in`). Dimensions must match. */
   convertTo(target: Quantity): Quantity {
-    this.requireSameDimension(target, 'convert');
+    if (!this.sameDimension(target)) {
+      throw new UnitError(
+        `Cannot convert ${dimToBaseLabel(this.dimension)} to ${dimToBaseLabel(target.dimension)} — different kinds of quantity`,
+      );
+    }
     return new Quantity(this.base, this.dimension, target.display);
   }
 
@@ -166,13 +165,10 @@ export class Quantity {
   private format(fmt: (n: Num) => string): string {
     if (this.display) {
       const shown = this.base.sub(this.display.offset).div(this.display.factor);
-      const text = fmt(shown);
-      return this.display.prefix
-        ? `${this.display.label}${text}`
-        : `${text} ${this.display.label}`;
+      return `${fmt(shown)}${this.display.label}`; // unit sits next to the number
     }
     if (this.isDimensionless()) return fmt(this.base);
-    return `${fmt(this.base)} ${dimToBaseLabel(this.dimension)}`;
+    return `${fmt(this.base)}${dimToBaseLabel(this.dimension)}`;
   }
 
   private requireSameDimension(other: Quantity, verb: string): void {
@@ -200,7 +196,6 @@ function combineMul(a: Quantity, b: Quantity): DisplayUnit | null {
       label: joinMul(a.display.label, b.display.label),
       factor: a.display.factor.mul(b.display.factor),
       offset: Num.ZERO,
-      prefix: false,
     };
   }
   return null;
@@ -213,7 +208,6 @@ function combineDiv(a: Quantity, b: Quantity): DisplayUnit | null {
       label: `${a.display.label}/${b.display.label}`,
       factor: a.display.factor.div(b.display.factor),
       offset: Num.ZERO,
-      prefix: false,
     };
   }
   return null;
