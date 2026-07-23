@@ -57,6 +57,19 @@ const SECTIONS: Section[] = [
     ],
   },
   {
+    title: 'Units',
+    entries: [
+      { syntax: '5 km + 300 m', meaning: 'mix compatible units', example: '= 5.3 km' },
+      { syntax: 'x to unit  ·  x in unit', meaning: 'convert', example: '50 mph in km/h = 80.4672 km/h' },
+      { syntax: 'length / mass / time', meaning: 'km, mi, ft, kg, lb, s, h, day…' },
+      { syntax: 'temperature', meaning: '°C, °F, K', example: '20°C in °F = 68 °F' },
+      { syntax: 'data', meaning: 'KB, MB, GB, KiB, MiB…', example: '1 GiB in MB = 1073.741824 MB' },
+      { syntax: 'angles', meaning: 'deg, rad — trig takes degrees', example: 'sin(90 deg) = 1' },
+      { syntax: 'currency', meaning: '£ € ¥, USD/EUR… (static rates)', example: '£40 * 1.2 = £48' },
+      { syntax: 'dollars = USD', meaning: '$ is the reference sigil, so write USD not $' },
+    ],
+  },
+  {
     title: 'Numbers',
     entries: [
       { syntax: '3.14', meaning: 'decimals — exact, no floating-point errors', example: '0.1 + 0.2 = 0.3' },

@@ -1,5 +1,6 @@
 import type { Node, RefTarget } from '../lang/index.ts';
 import { Num } from '../num/index.ts';
+import { Quantity, lookupUnit } from '../units/index.ts';
 import { EvalError } from './errors.ts';
 import { applyFunction, CONSTANTS } from './functions.ts';
 
@@ -7,19 +8,18 @@ import { applyFunction, CONSTANTS } from './functions.ts';
  * Resolves a reference (`$id` / `$name`) to a value. Should throw an
  * {@link EvalError} with kind `'ref'` when the target does not exist.
  */
-export type RefResolver = (target: RefTarget) => Num;
+export type RefResolver = (target: RefTarget) => Quantity;
 
-const HUNDREDTH = Num.of('0.01');
+const HUNDREDTH = Quantity.scalar(Num.of('0.01'));
 
 /**
- * Evaluate an AST to a {@link Num}. References are resolved through `resolve`.
- * Throws {@link EvalError} on any evaluation failure (dangling ref, unknown
- * identifier, division by zero, non-finite result, …).
+ * Evaluate an AST to a {@link Quantity}. References are resolved through
+ * `resolve`. Throws {@link EvalError} on any evaluation failure.
  */
-export function evaluate(node: Node, resolve: RefResolver): Num {
+export function evaluate(node: Node, resolve: RefResolver): Quantity {
   switch (node.type) {
     case 'number':
-      return Num.of(node.value);
+      return Quantity.scalar(Num.of(node.value));
 
     case 'ref':
       return resolve(node.target);
@@ -32,6 +32,12 @@ export function evaluate(node: Node, resolve: RefResolver): Num {
       return constant();
     }
 
+    case 'unit': {
+      const unit = lookupUnit(node.name);
+      if (!unit) throw new EvalError(`Unknown unit "${node.name}"`);
+      return Quantity.fromUnit(Num.ONE, unit);
+    }
+
     case 'unary': {
       const operand = evaluate(node.operand, resolve);
       return node.op === '-' ? operand.neg() : operand;
@@ -41,7 +47,18 @@ export function evaluate(node: Node, resolve: RefResolver): Num {
       return evaluate(node.operand, resolve).mul(HUNDREDTH);
 
     case 'factorial':
-      return factorial(evaluate(node.operand, resolve));
+      return Quantity.scalar(
+        factorial(requireScalar(evaluate(node.operand, resolve), 'factorial')),
+      );
+
+    case 'quantity':
+      return evaluateQuantity(node, resolve);
+
+    case 'convert': {
+      const value = evaluate(node.value, resolve);
+      const target = evaluate(node.unit, resolve);
+      return value.convertTo(target);
+    }
 
     case 'binary':
       return evaluateBinary(node, resolve);
@@ -53,10 +70,25 @@ export function evaluate(node: Node, resolve: RefResolver): Num {
   }
 }
 
+function evaluateQuantity(
+  node: Extract<Node, { type: 'quantity' }>,
+  resolve: RefResolver,
+): Quantity {
+  const value = requireScalar(evaluate(node.value, resolve), 'a quantity');
+  // A single unit uses fromUnit so affine units (°C/°F) apply their offset.
+  if (node.unit.type === 'unit') {
+    const unit = lookupUnit(node.unit.name);
+    if (!unit) throw new EvalError(`Unknown unit "${node.unit.name}"`);
+    return Quantity.fromUnit(value, unit);
+  }
+  // A compound unit (km/h, m^2) is a plain multiplication.
+  return Quantity.scalar(value).mul(evaluate(node.unit, resolve));
+}
+
 function evaluateBinary(
   node: Extract<Node, { type: 'binary' }>,
   resolve: RefResolver,
-): Num {
+): Quantity {
   const left = evaluate(node.left, resolve);
   const right = evaluate(node.right, resolve);
   switch (node.op) {
@@ -67,20 +99,32 @@ function evaluateBinary(
     case '*':
       return left.mul(right);
     case '/':
-      if (right.isZero()) throw new EvalError('Division by zero');
+      if (right.base.isZero()) throw new EvalError('Division by zero');
       return finite(left.div(right), 'division');
-    case '%':
-      if (right.isZero()) throw new EvalError('Modulo by zero');
-      return finite(left.mod(right), 'modulo');
-    case '^':
-      return finite(left.pow(right), 'exponentiation');
+    case '%': {
+      const a = requireScalar(left, 'modulo');
+      const b = requireScalar(right, 'modulo');
+      if (b.isZero()) throw new EvalError('Modulo by zero');
+      return Quantity.scalar(a.mod(b));
+    }
+    case '^': {
+      const exponent = requireScalar(right, 'an exponent');
+      return finite(left.pow(exponent), 'exponentiation');
+    }
   }
 }
 
-/** Largest factorial argument accepted, to bound work. */
-const FACTORIAL_LIMIT = 10000;
+/** The scalar value of a dimensionless quantity, or an error. */
+function requireScalar(q: Quantity, what: string): Num {
+  const value = q.asScalar();
+  if (value === null) {
+    throw new EvalError(`${what} must be a plain number, not a value with units`);
+  }
+  return value;
+}
 
 /** Exact integer factorial (`n!`) via BigInt. */
+const FACTORIAL_LIMIT = 10000;
 function factorial(value: Num): Num {
   if (!value.isInteger() || value.isNegative()) {
     throw new EvalError('Factorial requires a non-negative integer');
@@ -94,8 +138,8 @@ function factorial(value: Num): Num {
   return Num.of(product.toString());
 }
 
-/** Guard against NaN / infinite results from an operation. */
-function finite(value: Num, what: string): Num {
+/** Guard against NaN / infinite results. */
+function finite(value: Quantity, what: string): Quantity {
   if (value.isNaN()) {
     throw new EvalError(`Invalid ${what} (not a number)`);
   }

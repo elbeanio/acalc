@@ -61,6 +61,30 @@ Consequence / teachable rule: a modulo whose right operand is negative needs
 parentheses — `10 % (-3)`, because `10 % -3` reads the `-` as subtraction applied
 to `10%` (i.e. `(10%) - 3`).
 
+## Units
+
+Values can carry units, with dimensional analysis and conversion:
+
+```ebnf
+expression = additive ( ("to" | "in") unitExpr )* ;   (* conversion, lowest *)
+quantity   = power unitExpr? ;                         (* juxtaposition: 5 km *)
+unitExpr   = unitFactor ( ("*" | "/") unitFactor )* ;  (* only when a unit follows *)
+unitFactor = ( UNIT | "(" unitExpr ")" ) ( "^" NUMBER )? ;
+```
+
+- A number followed by a unit is a quantity: `5 km`, `50 mph`, `20°C`. Compound
+  units use `*` `/` `^`: `10 m/s`, `5 m^2`.
+- `to` / `in` convert: `50 mph in km/h`, `20°C to °F`, `1 GiB in MB`.
+- `+` and `−` require the same dimension; `*` `/` combine dimensions.
+- **Families:** length, mass, time (+ derived speed/area/volume), temperature
+  (°C/°F/K, affine), digital storage (KB…/KiB…), angles (deg/rad — trig accepts
+  degrees), and currency (£/€/¥ + ISO codes, **static approximate rates**).
+- `in` is the conversion keyword, so **inches** are written `inch`/`inches`.
+- `$` is the reference sigil, so **dollars** are written `USD` (not `$`).
+  Currency symbols `£`/`€`/`¥` may prefix a value (`£40`).
+- Temperature is affine: conversions are correct (`20°C in °F` = `68 °F`), but
+  adding two temperatures adds absolute kelvin values.
+
 ## Lexical grammar (tokens)
 
 ```ebnf

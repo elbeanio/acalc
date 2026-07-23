@@ -1,3 +1,4 @@
+import { CURRENCY_PREFIX_SYMBOLS, lookupUnit } from '../units/index.ts';
 import type { Node, RefTarget } from './ast.ts';
 import { ParseError } from './errors.ts';
 import { tokenize } from './lexer.ts';
@@ -10,6 +11,8 @@ const OPERAND_START: ReadonlySet<TokenType> = new Set<TokenType>([
   'ident',
   'lparen',
 ]);
+
+const CONVERSION_KEYWORDS = new Set(['to', 'in']);
 
 /**
  * Parse an expression string into an AST following `docs/GRAMMAR.md`.
@@ -36,8 +39,21 @@ class Parser {
     return node;
   }
 
-  // additive = multiplicative ( ("+"|"-") multiplicative )*
+  // expression = additive ( ("to"|"in") unitExpr )*   (conversion, lowest)
   private parseExpression(): Node {
+    let node = this.parseAdditive();
+    for (;;) {
+      const tok = this.peek();
+      if (tok.type === 'ident' && CONVERSION_KEYWORDS.has(tok.value)) {
+        this.advance();
+        node = { type: 'convert', value: node, unit: this.parseUnitExpr() };
+      } else {
+        return node;
+      }
+    }
+  }
+
+  private parseAdditive(): Node {
     let left = this.parseMultiplicative();
     for (;;) {
       const t = this.peek().type;
@@ -51,7 +67,6 @@ class Parser {
     }
   }
 
-  // multiplicative = unary ( ("*"|"/"|"%"mod) unary )*
   private parseMultiplicative(): Node {
     let left = this.parseUnary();
     for (;;) {
@@ -70,7 +85,6 @@ class Parser {
     }
   }
 
-  // unary = ("-"|"+") unary | power
   private parseUnary(): Node {
     const t = this.peek().type;
     if (t === 'minus' || t === 'plus') {
@@ -78,10 +92,18 @@ class Parser {
       const operand = this.parseUnary();
       return { type: 'unary', op: t === 'minus' ? '-' : '+', operand };
     }
-    return this.parsePower();
+    return this.parseQuantity();
   }
 
-  // power = postfix ("^" unary)?   (right-associative via unary exponent)
+  // quantity = power (unitExpr)?   — juxtaposition, e.g. "5 km", "5 km/h"
+  private parseQuantity(): Node {
+    const value = this.parsePower();
+    if (this.nextIsUnit()) {
+      return { type: 'quantity', value, unit: this.parseUnitExpr() };
+    }
+    return value;
+  }
+
   private parsePower(): Node {
     const base = this.parsePostfix();
     if (this.peek().type === 'caret') {
@@ -92,7 +114,6 @@ class Parser {
     return base;
   }
 
-  // postfix = primary ("%" | "!")*   (percent/factorial; mod handled above)
   private parsePostfix(): Node {
     let node = this.parsePrimary();
     for (;;) {
@@ -119,11 +140,24 @@ class Parser {
         this.advance();
         return { type: 'ref', target: toRefTarget(tok.value) };
       case 'ident': {
+        const name = tok.value;
         this.advance();
         if (this.peek().type === 'lparen') {
-          return { type: 'call', name: tok.value, args: this.parseArguments() };
+          return { type: 'call', name, args: this.parseArguments() };
         }
-        return { type: 'identifier', name: tok.value };
+        // Currency symbol before a value, e.g. £40 (note: $ is the ref sigil).
+        if (
+          CURRENCY_PREFIX_SYMBOLS.has(name) &&
+          this.startsPrefixValue(this.peek().type)
+        ) {
+          return {
+            type: 'quantity',
+            value: this.parsePower(),
+            unit: { type: 'unit', name },
+          };
+        }
+        if (lookupUnit(name)) return { type: 'unit', name };
+        return { type: 'identifier', name };
       }
       case 'lparen': {
         this.advance();
@@ -141,6 +175,58 @@ class Parser {
     }
   }
 
+  // unitExpr = unitFactor ( ("*"|"/") unitFactor )*   (only when a unit follows)
+  private parseUnitExpr(): Node {
+    let node = this.parseUnitFactor();
+    for (;;) {
+      const t = this.peek().type;
+      if ((t === 'star' || t === 'slash') && this.unitFollowsOperator()) {
+        this.advance();
+        const right = this.parseUnitFactor();
+        node = { type: 'binary', op: t === 'star' ? '*' : '/', left: node, right };
+      } else {
+        return node;
+      }
+    }
+  }
+
+  private parseUnitFactor(): Node {
+    const tok = this.peek();
+    let atom: Node;
+    if (tok.type === 'lparen') {
+      this.advance();
+      atom = this.parseUnitExpr();
+      this.expect('rparen', ')');
+    } else if (tok.type === 'ident' && lookupUnit(tok.value)) {
+      this.advance();
+      atom = { type: 'unit', name: tok.value };
+    } else {
+      throw new ParseError(`Expected a unit, got "${tok.value}"`, tok.start);
+    }
+    if (this.peek().type === 'caret') {
+      this.advance();
+      atom = { type: 'binary', op: '^', left: atom, right: this.parseUnitPower() };
+    }
+    return atom;
+  }
+
+  private parseUnitPower(): Node {
+    let negate = false;
+    if (this.peek().type === 'minus') {
+      this.advance();
+      negate = true;
+    } else if (this.peek().type === 'plus') {
+      this.advance();
+    }
+    const tok = this.peek();
+    if (tok.type !== 'number') {
+      throw new ParseError(`Expected a unit exponent`, tok.start);
+    }
+    this.advance();
+    const number: Node = { type: 'number', value: tok.value };
+    return negate ? { type: 'unary', op: '-', operand: number } : number;
+  }
+
   // "(" ( expression ("," expression)* )? ")"
   private parseArguments(): Node[] {
     this.expect('lparen', '(');
@@ -154,6 +240,27 @@ class Parser {
     }
     this.expect('rparen', ')');
     return args;
+  }
+
+  /** True when the next token begins a unit (for juxtaposition). */
+  private nextIsUnit(): boolean {
+    const tok = this.peek();
+    if (tok.type !== 'ident') return false;
+    if (CONVERSION_KEYWORDS.has(tok.value)) return false;
+    if (this.tokens[this.pos + 1]?.type === 'lparen') return false; // function call
+    return lookupUnit(tok.value) !== null;
+  }
+
+  /** True when a unit follows the operator at the cursor (for `*`/`/` in units). */
+  private unitFollowsOperator(): boolean {
+    const next = this.tokens[this.pos + 1];
+    if (!next) return false;
+    if (next.type === 'lparen') return true;
+    return next.type === 'ident' && lookupUnit(next.value) !== null;
+  }
+
+  private startsPrefixValue(type: TokenType): boolean {
+    return type === 'number' || type === 'lparen' || type === 'ref';
   }
 
   /** True when the `%` at the cursor is infix modulo (an operand follows it). */

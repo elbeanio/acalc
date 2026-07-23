@@ -90,5 +90,27 @@ function renderInner(node: Node): string {
     }
     case 'call':
       return `${node.name}(${node.args.map((a) => render(a, 0)).join(', ')})`;
+    case 'unit':
+      return node.name;
+    case 'quantity':
+      return `${render(node.value, PREC.postfix)} ${renderUnit(node.unit)}`;
+    case 'convert':
+      return `${render(node.value, 0)} to ${renderUnit(node.unit)}`;
+  }
+}
+
+/** Render a unit expression compactly, e.g. `km/h`, `m^2`. */
+function renderUnit(node: Node): string {
+  switch (node.type) {
+    case 'unit':
+      return node.name;
+    case 'number':
+      return node.value;
+    case 'unary':
+      return `${node.op}${renderUnit(node.operand)}`;
+    case 'binary':
+      return `${renderUnit(node.left)}${node.op}${renderUnit(node.right)}`;
+    default:
+      return render(node, 0);
   }
 }

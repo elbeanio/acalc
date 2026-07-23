@@ -2,8 +2,11 @@ import { ParseError } from './errors.ts';
 import type { Token, TokenType } from './tokens.ts';
 
 const NUMBER_RE = /(?:\d+\.?\d*|\.\d+)(?:[eE][+-]?\d+)?/y;
-const IDENT_RE = /[A-Za-z_][A-Za-z0-9_]*/y;
+// Identifiers also allow ° and µ so units like °C / µm tokenise as one word.
+const IDENT_RE = /[A-Za-z_°µ][A-Za-z0-9_°µ]*/y;
 const DIGITS_RE = /\d+/y;
+// Currency symbols are standalone tokens so `£40` splits into `£` and `40`.
+const CURRENCY_CHARS = '£€¥';
 
 /** Single-character tokens, including accepted unicode operator aliases. */
 const SINGLE_CHAR: Record<string, TokenType> = {
@@ -63,7 +66,14 @@ export function tokenize(source: string): Token[] {
       throw new ParseError('Expected a reference name or number after "$"', i);
     }
 
-    // Identifiers (functions and constants).
+    // Currency symbols — emitted as single-char identifiers (units).
+    if (CURRENCY_CHARS.includes(ch)) {
+      tokens.push({ type: 'ident', value: ch, start: i });
+      i++;
+      continue;
+    }
+
+    // Identifiers (functions, constants and units).
     if (isIdentStart(ch)) {
       IDENT_RE.lastIndex = i;
       const m = IDENT_RE.exec(source)!;
@@ -90,8 +100,13 @@ function isDigit(ch: string | undefined): boolean {
   return ch !== undefined && ch >= '0' && ch <= '9';
 }
 
+const UNIT_SYMBOL_CHARS = '°µ';
+
 function isIdentStart(ch: string): boolean {
   return (
-    (ch >= 'a' && ch <= 'z') || (ch >= 'A' && ch <= 'Z') || ch === '_'
+    (ch >= 'a' && ch <= 'z') ||
+    (ch >= 'A' && ch <= 'Z') ||
+    ch === '_' ||
+    UNIT_SYMBOL_CHARS.includes(ch)
   );
 }

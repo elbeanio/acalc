@@ -263,6 +263,22 @@ test('computes factorial', async ({ page }) => {
   await expect(result(page, 0)).toHaveText('121');
 });
 
+test('computes with units and converts', async ({ page }) => {
+  await typeInRow(page, 0, '5 km + 300 m');
+  await expect(result(page, 0)).toHaveText('5.3 km');
+
+  await editRow(page, 0);
+  await clearFocusedRow(page);
+  await page.keyboard.type('50 mph in km/h');
+  await expect(result(page, 0)).toHaveText('80.4672 km/h');
+
+  await editRow(page, 0);
+  await clearFocusedRow(page);
+  await page.keyboard.type('20');
+  await page.keyboard.type('°C in °F'); // 20°C in °F
+  await expect(result(page, 0)).toHaveText('68 °F');
+});
+
 test('percent and modulo evaluate correctly', async ({ page }) => {
   await typeInRow(page, 0, '200 + 10%');
   await expect(result(page, 0)).toHaveText('200.1');

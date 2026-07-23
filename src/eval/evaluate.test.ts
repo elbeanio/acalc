@@ -1,6 +1,7 @@
 import { describe, it, expect } from 'vitest';
 import { parse } from '../lang/index.ts';
 import { Num } from '../num/index.ts';
+import { Quantity } from '../units/index.ts';
 import { evaluate } from './evaluate.ts';
 import { EvalError } from './errors.ts';
 
@@ -16,7 +17,7 @@ function run(
     if (raw === undefined) {
       throw new EvalError('#ref!', 'ref');
     }
-    return Num.of(raw);
+    return Quantity.scalar(Num.of(raw));
   });
   return result.toDisplay();
 }

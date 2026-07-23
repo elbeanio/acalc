@@ -1,4 +1,4 @@
-import type { Num } from '../num/index.ts';
+import type { Quantity } from '../units/index.ts';
 
 /**
  * A single calculation. `id` is the immutable, monotonic identifier shown as
@@ -29,6 +29,6 @@ export interface RowError {
 
 /** The computed outcome for a row. */
 export type RowResult =
-  | { readonly status: 'ok'; readonly value: Num }
+  | { readonly status: 'ok'; readonly value: Quantity }
   | { readonly status: 'empty' } // blank source
   | { readonly status: 'error'; readonly error: RowError };

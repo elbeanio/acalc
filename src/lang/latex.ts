@@ -94,6 +94,33 @@ function renderInner(node: Node): string {
 
     case 'call':
       return renderCall(node);
+
+    case 'unit':
+      return `\\text{${escapeText(node.name)}}`;
+
+    case 'quantity':
+      return `${render(node.value, PREC.postfix)}\\,${renderUnitLatex(node.unit)}`;
+
+    case 'convert':
+      return `${render(node.value, 0)} \\to ${renderUnitLatex(node.unit)}`;
+  }
+}
+
+function renderUnitLatex(node: Node): string {
+  switch (node.type) {
+    case 'unit':
+      return `\\text{${escapeText(node.name)}}`;
+    case 'number':
+      return node.value;
+    case 'unary':
+      return `${node.op === '-' ? '-' : ''}${renderUnitLatex(node.operand)}`;
+    case 'binary':
+      if (node.op === '^') {
+        return `${renderUnitLatex(node.left)}^{${renderUnitLatex(node.right)}}`;
+      }
+      return `${renderUnitLatex(node.left)}${node.op === '*' ? '\\cdot ' : '/'}${renderUnitLatex(node.right)}`;
+    default:
+      return render(node, 0);
   }
 }
 

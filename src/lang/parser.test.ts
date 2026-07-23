@@ -24,6 +24,12 @@ function sexpr(node: Node): string {
       return `(fact ${sexpr(node.operand)})`;
     case 'call':
       return `(${node.name}${node.args.map((a) => ' ' + sexpr(a)).join('')})`;
+    case 'unit':
+      return node.name;
+    case 'quantity':
+      return `(qty ${sexpr(node.value)} ${sexpr(node.unit)})`;
+    case 'convert':
+      return `(conv ${sexpr(node.value)} ${sexpr(node.unit)})`;
   }
 }
 
@@ -92,6 +98,29 @@ describe('parser: references, identifiers, calls', () => {
     expect(sx('min(1, 2, 3)')).toBe('(min 1 2 3)');
     expect(sx('max()')).toBe('(max)');
     expect(sx('2 * sqrt(9)')).toBe('(* 2 (sqrt 9))');
+  });
+});
+
+describe('parser: units', () => {
+  it('juxtaposition and compound units', () => {
+    expect(sx('5 km')).toBe('(qty 5 km)');
+    expect(sx('10 m/s')).toBe('(qty 10 (/ m s))');
+    expect(sx('20°C')).toBe('(qty 20 °C)');
+    expect(sx('2 m^2')).toBe('(qty 2 (^ m 2))');
+  });
+
+  it('conversion with to / in', () => {
+    expect(sx('50 mph in km/h')).toBe('(conv (qty 50 mph) (/ km h))');
+    expect(sx('5 km to m')).toBe('(conv (qty 5 km) m)');
+  });
+
+  it('currency prefix and suffix', () => {
+    expect(sx('£40')).toBe('(qty 40 £)');
+    expect(sx('40 GBP')).toBe('(qty 40 GBP)');
+  });
+
+  it('a number times a bare unit still parses', () => {
+    expect(sx('5 km / 2')).toBe('(/ (qty 5 km) 2)');
   });
 });
 
