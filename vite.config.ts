@@ -1,8 +1,10 @@
 import { defineConfig } from 'vitest/config';
 import react from '@vitejs/plugin-react';
 
+import { cloudflare } from "@cloudflare/vite-plugin";
+
 export default defineConfig({
-  plugins: [react()],
+  plugins: [react(), cloudflare()],
   // Relative base so the built static site works from any S3 bucket path.
   base: './',
   build: {

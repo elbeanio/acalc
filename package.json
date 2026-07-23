@@ -11,14 +11,15 @@
   "scripts": {
     "dev": "vite",
     "build": "tsc -b && vite build",
-    "preview": "vite preview",
+    "preview": "pnpm run build && wrangler dev",
     "typecheck": "tsc -b",
     "test": "vitest run",
     "test:watch": "vitest",
     "e2e": "playwright test",
     "e2e:ui": "playwright test --ui",
     "lint": "eslint .",
-    "format": "prettier --write ."
+    "format": "prettier --write .",
+    "deploy": "pnpm run build && wrangler deploy"
   },
   "dependencies": {
     "@codemirror/autocomplete": "^6.20.3",
@@ -33,6 +34,7 @@
     "react-dom": "^19.0.0"
   },
   "devDependencies": {
+    "@cloudflare/vite-plugin": "^1.46.0",
     "@eslint/js": "^9.17.0",
     "@playwright/test": "^1.61.1",
     "@testing-library/jest-dom": "^6.9.1",
@@ -50,6 +52,7 @@
     "typescript": "^5.7.3",
     "typescript-eslint": "^8.26.1",
     "vite": "^7.1.0",
-    "vitest": "^3.0.7"
+    "vitest": "^3.0.7",
+    "wrangler": "^4.113.0"
   }
 }
