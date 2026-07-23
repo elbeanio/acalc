@@ -16,6 +16,7 @@ import {
   SCHEMA_VERSION,
   type StorageAdapter,
 } from './storage.ts';
+import type { SharedStack } from './share.ts';
 import type { Document, Stack } from './types.ts';
 import { StateError } from './types.ts';
 
@@ -168,6 +169,31 @@ export class AppStore {
   addStack(name: string): string {
     const id = this.genId();
     this.histories.set(id, initHistory(ops.createStack(id, name)));
+    this.order.push(id);
+    this.activeStackId = id;
+    this.lastEdit = null;
+    this.afterChange();
+    return id;
+  }
+
+  /**
+   * Clone a shared stack in as a new active stack (from an opened share link),
+   * preserving row ids so its internal `$n` references stay intact. Existing
+   * stacks are untouched. Returns the new stack's id.
+   */
+  importStack(shared: SharedStack): string {
+    const id = this.genId();
+    const rows =
+      shared.rows.length > 0 ? shared.rows.map((r) => ({ ...r })) : [{ id: 1, source: '' }];
+    const maxRowId = rows.reduce((max, r) => Math.max(max, r.id), 0);
+    const stack: Stack = {
+      id,
+      name: shared.name,
+      // Guard the id counter so a new row can never collide with an imported one.
+      nextRowId: Math.max(shared.nextRowId, maxRowId + 1),
+      rows,
+    };
+    this.histories.set(id, initHistory(stack));
     this.order.push(id);
     this.activeStackId = id;
     this.lastEdit = null;

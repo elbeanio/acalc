@@ -11,3 +11,4 @@ export {
 } from './storage.ts';
 export type { Row, Stack, Document, PersistedState } from './types.ts';
 export { StateError } from './types.ts';
+export { encodeStack, decodeStack, type SharedStack } from './share.ts';

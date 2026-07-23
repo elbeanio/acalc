@@ -30,6 +30,7 @@
     "@lezer/highlight": "^1.2.3",
     "decimal.js": "^10.6.0",
     "katex": "^0.18.1",
+    "lz-string": "^1.5.0",
     "react": "^19.0.0",
     "react-dom": "^19.0.0"
   },

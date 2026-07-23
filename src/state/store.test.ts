@@ -195,4 +195,42 @@ describe('AppStore: stacks', () => {
     expect(() => store.renameRow('stack-1', 2, 'x')).toThrow(StateError);
     expect(activeRows(store)[1]?.name).toBeUndefined();
   });
+
+  it('imports a shared stack as a new active stack, preserving row ids', () => {
+    const { store } = newStore();
+    store.updateRowSource('stack-1', 1, 'original'); // existing stack, untouched
+
+    const id = store.importStack({
+      name: 'Shared',
+      nextRowId: 4,
+      rows: [
+        { id: 1, source: '3 + 3' },
+        { id: 2, name: 'total', source: '$1 * 2' },
+      ],
+    });
+
+    const snap = store.getSnapshot();
+    expect(id).toBe('stack-2');
+    expect(snap.activeStackId).toBe('stack-2');
+    expect(snap.document.stacks).toHaveLength(2);
+    const imported = stackById(store, id);
+    expect(imported.name).toBe('Shared');
+    expect(imported.nextRowId).toBe(4);
+    expect(imported.rows).toEqual([
+      { id: 1, source: '3 + 3' },
+      { id: 2, name: 'total', source: '$1 * 2' },
+    ]);
+    // The original stack is left alone.
+    expect(stackById(store, 'stack-1').rows[0]?.source).toBe('original');
+  });
+
+  it('guards the imported id counter against row-id collisions', () => {
+    const { store } = newStore();
+    const id = store.importStack({
+      name: 'S',
+      nextRowId: 1, // deliberately too low for the rows below
+      rows: [{ id: 7, source: '1' }],
+    });
+    expect(stackById(store, id).nextRowId).toBe(8); // max row id + 1
+  });
 });

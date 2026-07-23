@@ -278,6 +278,23 @@ body {
   border-color: var(--accent);
 }
 
+.stack-share {
+  margin-left: auto;
+  border: 1px solid var(--border);
+  background: none;
+  color: var(--muted);
+  font-size: 0.8rem;
+  padding: 0.3rem 0.7rem;
+  border-radius: 6px;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.stack-share:hover {
+  color: var(--accent);
+  border-color: var(--accent);
+}
+
 /* --- rows --- */
 .stack {
   display: flex;

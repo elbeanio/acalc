@@ -448,3 +448,40 @@ test('editing a middle row ripples to all dependents', async ({ page }) => {
   await expect(result(page, 1)).toHaveAttribute('data-value', '200');
   await expect(result(page, 2)).toHaveAttribute('data-value', '205');
 });
+
+test('shares a stack as a link that clones in on open', async ({
+  page,
+  context,
+  browser,
+}) => {
+  await context.grantPermissions(['clipboard-read', 'clipboard-write']);
+  await typeInRow(page, 0, '3 + 3'); // $1 = 6
+  await page.keyboard.press('Enter');
+  await page.keyboard.type('$1 * 2'); // $2 = 12
+
+  await page.getByRole('button', { name: /shareable link/i }).click();
+  const url = await page.evaluate(() => navigator.clipboard.readText());
+  expect(url).toContain('#s=');
+
+  // Open the link as a cold load in a fresh context (a recipient's browser,
+  // with its own empty storage) — the shared stack clones in as a new tab.
+  const recipient = await browser.newContext();
+  const p2 = await recipient.newPage();
+  await p2.goto(url);
+  await expect(p2.getByRole('tab')).toHaveCount(2); // default + cloned
+  await expect(result(p2, 0)).toHaveAttribute('data-value', '6');
+  await expect(result(p2, 1)).toHaveAttribute('data-value', '12');
+  expect(new URL(p2.url()).hash).toBe(''); // hash stripped, so a refresh won't re-clone
+  await recipient.close();
+});
+
+test('a corrupt share link is ignored, not fatal', async ({ browser }) => {
+  const recipient = await browser.newContext();
+  const p2 = await recipient.newPage();
+  await p2.goto('/#s=this-is-not-valid-data');
+  await expect(p2.getByRole('tab')).toHaveCount(1); // just the default stack
+  await expect(
+    p2.getByRole('button', { name: /shareable link/i }),
+  ).toBeVisible();
+  await recipient.close();
+});

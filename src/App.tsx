@@ -1,9 +1,29 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
+import { decodeStack } from './state/index.ts';
 import { Calculator } from './ui/Calculator.tsx';
 import { HelpDialog } from './ui/HelpDialog.tsx';
+import { useStore } from './ui/useStore.ts';
 
 export function App() {
+  const store = useStore();
   const [helpOpen, setHelpOpen] = useState(false);
+
+  // A share link carries a stack in the URL hash (`#s=…`). On open, clone it in
+  // as a new stack, then strip the hash so a refresh doesn't re-clone it.
+  const importedShare = useRef(false);
+  useEffect(() => {
+    if (importedShare.current) return;
+    importedShare.current = true;
+    const match = /^#s=(.+)$/.exec(window.location.hash);
+    if (!match) return;
+    window.history.replaceState(
+      null,
+      '',
+      window.location.pathname + window.location.search,
+    );
+    const shared = decodeStack(match[1]!);
+    if (shared) store.importStack(shared);
+  }, [store]);
 
   // "?" opens help — but not while typing in a row/name field.
   useEffect(() => {
