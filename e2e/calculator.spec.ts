@@ -32,12 +32,12 @@ test.beforeEach(async ({ page }) => {
 
 test('evaluates an expression as you type', async ({ page }) => {
   await typeInRow(page, 0, '2 + 3 * 4');
-  await expect(result(page, 0)).toHaveText('14');
+  await expect(result(page, 0)).toHaveAttribute('data-value', '14');
 });
 
 test('is decimal-correct (0.1 + 0.2 = 0.3)', async ({ page }) => {
   await typeInRow(page, 0, '0.1 + 0.2');
-  await expect(result(page, 0)).toHaveText('0.3');
+  await expect(result(page, 0)).toHaveAttribute('data-value', '0.3');
 });
 
 test('references an earlier row and ripples edits through the chain', async ({
@@ -46,14 +46,14 @@ test('references an earlier row and ripples edits through the chain', async ({
   await typeInRow(page, 0, '2 + 3');
   await page.keyboard.press('Enter'); // new row, focus moves to it
   await page.keyboard.type('$1 * 10'); // typed into the new row
-  await expect(result(page, 0)).toHaveText('5');
-  await expect(result(page, 1)).toHaveText('50');
+  await expect(result(page, 0)).toHaveAttribute('data-value', '5');
+  await expect(result(page, 1)).toHaveAttribute('data-value', '50');
 
   await editRow(page, 0);
   await clearFocusedRow(page);
   await page.keyboard.type('2 + 8');
-  await expect(result(page, 0)).toHaveText('10');
-  await expect(result(page, 1)).toHaveText('100');
+  await expect(result(page, 0)).toHaveAttribute('data-value', '10');
+  await expect(result(page, 1)).toHaveAttribute('data-value', '100');
 });
 
 // --- CodeMirror behaviour --------------------------------------------------
@@ -71,7 +71,7 @@ test('$ opens the reference autocomplete and inserts a reference', async ({
 
   await page.keyboard.press('Enter'); // accept the completion, not a new row
   await page.keyboard.type(' * 2');
-  await expect(result(page, 1)).toHaveText('200');
+  await expect(result(page, 1)).toHaveAttribute('data-value', '200');
 });
 
 test('blurred rows are typeset, and clicking one returns to the editor', async ({
@@ -80,7 +80,7 @@ test('blurred rows are typeset, and clicking one returns to the editor', async (
   await typeInRow(page, 0, '1/2');
   await page.keyboard.press('Enter'); // row 0 blurs → typeset
 
-  await expect(rowLoc(page, 0).locator('.katex')).toBeVisible();
+  await expect(rowLoc(page, 0).locator('.row-rendered .katex')).toBeVisible();
   await expect(rowLoc(page, 0).locator('.cm-content')).toHaveCount(0);
 
   await editRow(page, 0); // click the typeset row
@@ -93,8 +93,8 @@ test('Enter creates a new row and focuses it', async ({ page }) => {
   await expect(rows(page)).toHaveCount(2);
 
   await page.keyboard.type('20'); // lands in the new row, not the old one
-  await expect(result(page, 0)).toHaveText('10');
-  await expect(result(page, 1)).toHaveText('20');
+  await expect(result(page, 0)).toHaveAttribute('data-value', '10');
+  await expect(result(page, 1)).toHaveAttribute('data-value', '20');
 });
 
 test('backspace stays within the focused row', async ({ page }) => {
@@ -103,7 +103,7 @@ test('backspace stays within the focused row', async ({ page }) => {
   for (let i = 0; i < 5; i++) await page.keyboard.press('Backspace');
 
   await expect(rows(page)).toHaveCount(2); // the row is not deleted
-  await expect(result(page, 0)).toHaveText('5'); // neighbour untouched
+  await expect(result(page, 0)).toHaveAttribute('data-value', '5'); // neighbour untouched
 });
 
 test('arrow up moves to the row above with the cursor at the end', async ({
@@ -115,14 +115,14 @@ test('arrow up moves to the row above with the cursor at the end', async ({
 
   await page.keyboard.press('ArrowUp'); // into row 1, cursor at end
   await page.keyboard.type('5'); // appended → 1005
-  await expect(result(page, 0)).toHaveText('1005');
-  await expect(result(page, 1)).toHaveText('200');
+  await expect(result(page, 0)).toHaveAttribute('data-value', '1005');
+  await expect(result(page, 1)).toHaveAttribute('data-value', '200');
 });
 
 test('focuses the first row on load, ready to type', async ({ page }) => {
   await expect(activeEditor(page)).toBeFocused();
   await page.keyboard.type('7 * 6'); // no click needed
-  await expect(result(page, 0)).toHaveText('42');
+  await expect(result(page, 0)).toHaveAttribute('data-value', '42');
 });
 
 test('Alt+ArrowUp moves a row up', async ({ page }) => {
@@ -131,8 +131,8 @@ test('Alt+ArrowUp moves a row up', async ({ page }) => {
   await page.keyboard.type('2'); // rows: [1, 2], focus on row 2
 
   await page.keyboard.press('Alt+ArrowUp'); // move "2" above "1"
-  await expect(result(page, 0)).toHaveText('2');
-  await expect(result(page, 1)).toHaveText('1');
+  await expect(result(page, 0)).toHaveAttribute('data-value', '2');
+  await expect(result(page, 1)).toHaveAttribute('data-value', '1');
 });
 
 test('Cmd/Ctrl+Shift+Backspace deletes the focused row', async ({ page }) => {
@@ -142,7 +142,7 @@ test('Cmd/Ctrl+Shift+Backspace deletes the focused row', async ({ page }) => {
 
   await page.keyboard.press('ControlOrMeta+Shift+Backspace');
   await expect(rows(page)).toHaveCount(1);
-  await expect(result(page, 0)).toHaveText('10');
+  await expect(result(page, 0)).toHaveAttribute('data-value', '10');
 });
 
 // --- undo ------------------------------------------------------------------
@@ -157,15 +157,15 @@ test('undo moves focus to the changed row', async ({ page }) => {
   await expect(activeEditor(page)).toBeFocused(); // focus jumps to row 2
   await page.keyboard.type('9');
 
-  await expect(result(page, 1)).toHaveText('9');
-  await expect(result(page, 0)).toHaveText('10'); // row 1 untouched
+  await expect(result(page, 1)).toHaveAttribute('data-value', '9');
+  await expect(result(page, 0)).toHaveAttribute('data-value', '10'); // row 1 untouched
 });
 
 // --- errors ----------------------------------------------------------------
 
 test('shows which reference is dangling', async ({ page }) => {
   await typeInRow(page, 0, '$99 + 1');
-  await expect(result(page, 0)).toHaveText('#ref!($99)');
+  await expect(result(page, 0)).toHaveAttribute('data-value', '#ref!($99)');
 });
 
 // --- stacks & persistence --------------------------------------------------
@@ -176,15 +176,15 @@ test('new stacks have isolated undo history', async ({ page }) => {
   await expect(page.getByRole('tab')).toHaveCount(2);
 
   await typeInRow(page, 0, '22'); // stack 2, row 1
-  await expect(result(page, 0)).toHaveText('22');
+  await expect(result(page, 0)).toHaveAttribute('data-value', '22');
 
   // Undo twice (per-character) clears stack 2 without touching stack 1.
   await page.keyboard.press('ControlOrMeta+z');
   await page.keyboard.press('ControlOrMeta+z');
-  await expect(result(page, 0)).toHaveText('');
+  await expect(result(page, 0)).toHaveAttribute('data-value', '');
 
   await page.getByRole('tab').first().click(); // back to stack 1
-  await expect(result(page, 0)).toHaveText('11');
+  await expect(result(page, 0)).toHaveAttribute('data-value', '11');
 });
 
 test('creating a tab is not undone by undo', async ({ page }) => {
@@ -196,10 +196,10 @@ test('creating a tab is not undone by undo', async ({ page }) => {
 
 test('persists calculations across a reload', async ({ page }) => {
   await typeInRow(page, 0, '6 * 7');
-  await expect(result(page, 0)).toHaveText('42');
+  await expect(result(page, 0)).toHaveAttribute('data-value', '42');
 
   await page.reload();
-  await expect(result(page, 0)).toHaveText('42');
+  await expect(result(page, 0)).toHaveAttribute('data-value', '42');
 });
 
 // --- more coverage ---------------------------------------------------------
@@ -207,9 +207,9 @@ test('persists calculations across a reload', async ({ page }) => {
 test('redo re-applies an undone edit', async ({ page }) => {
   await typeInRow(page, 0, '5');
   await page.keyboard.press('ControlOrMeta+z'); // undo the burst → empty
-  await expect(result(page, 0)).toHaveText('');
+  await expect(result(page, 0)).toHaveAttribute('data-value', '');
   await page.keyboard.press('ControlOrMeta+Shift+z'); // redo
-  await expect(result(page, 0)).toHaveText('5');
+  await expect(result(page, 0)).toHaveAttribute('data-value', '5');
 });
 
 test('Alt+ArrowDown moves a row down', async ({ page }) => {
@@ -218,8 +218,8 @@ test('Alt+ArrowDown moves a row down', async ({ page }) => {
   await page.keyboard.type('2'); // rows: [1, 2]
   await page.keyboard.press('ArrowUp'); // focus row "1"
   await page.keyboard.press('Alt+ArrowDown'); // move it below "2"
-  await expect(result(page, 0)).toHaveText('2');
-  await expect(result(page, 1)).toHaveText('1');
+  await expect(result(page, 0)).toHaveAttribute('data-value', '2');
+  await expect(result(page, 1)).toHaveAttribute('data-value', '1');
 });
 
 test('references a row by its name', async ({ page }) => {
@@ -229,7 +229,7 @@ test('references a row by its name', async ({ page }) => {
 
   await page.getByText('+ Add row').click();
   await typeInRow(page, 1, '$price * 2');
-  await expect(result(page, 1)).toHaveText('200');
+  await expect(result(page, 1)).toHaveAttribute('data-value', '200');
 });
 
 test('deleting a referenced row leaves its dependent dangling', async ({
@@ -238,59 +238,59 @@ test('deleting a referenced row leaves its dependent dangling', async ({
   await typeInRow(page, 0, '50');
   await page.getByText('+ Add row').click();
   await typeInRow(page, 1, '$1 + 1');
-  await expect(result(page, 1)).toHaveText('51');
+  await expect(result(page, 1)).toHaveAttribute('data-value', '51');
 
   await rowLoc(page, 0).locator('.row-delete').click();
   await expect(rows(page)).toHaveCount(1);
-  await expect(result(page, 0)).toHaveText('#ref!($1)');
+  await expect(result(page, 0)).toHaveAttribute('data-value', '#ref!($1)');
 });
 
 test('detects a circular reference', async ({ page }) => {
   await typeInRow(page, 0, '$2');
   await page.getByText('+ Add row').click();
   await typeInRow(page, 1, '$1');
-  await expect(result(page, 0)).toHaveText('Circular reference');
-  await expect(result(page, 1)).toHaveText('Circular reference');
+  await expect(result(page, 0)).toHaveAttribute('data-value', 'Circular reference');
+  await expect(result(page, 1)).toHaveAttribute('data-value', 'Circular reference');
 });
 
 test('computes factorial', async ({ page }) => {
   await typeInRow(page, 0, '5!');
-  await expect(result(page, 0)).toHaveText('120');
+  await expect(result(page, 0)).toHaveAttribute('data-value', '120');
 
   await editRow(page, 0);
   await clearFocusedRow(page);
   await page.keyboard.type('(3 + 2)! + 1');
-  await expect(result(page, 0)).toHaveText('121');
+  await expect(result(page, 0)).toHaveAttribute('data-value', '121');
 });
 
 test('computes with units and converts', async ({ page }) => {
   await typeInRow(page, 0, '5 km + 300 m');
-  await expect(result(page, 0)).toHaveText('5.3km');
+  await expect(result(page, 0)).toHaveAttribute('data-value', '5.3km');
 
   await editRow(page, 0);
   await clearFocusedRow(page);
   await page.keyboard.type('50 mph in km/h');
-  await expect(result(page, 0)).toHaveText('80.4672km/h');
+  await expect(result(page, 0)).toHaveAttribute('data-value', '80.4672km/h');
 
   await editRow(page, 0);
   await clearFocusedRow(page);
   await page.keyboard.type('20c in f'); // lowercase temperature
-  await expect(result(page, 0)).toHaveText('68°F');
+  await expect(result(page, 0)).toHaveAttribute('data-value', '68°F');
 });
 
 test('percent and modulo evaluate correctly', async ({ page }) => {
   await typeInRow(page, 0, '200 + 10%');
-  await expect(result(page, 0)).toHaveText('200.1');
+  await expect(result(page, 0)).toHaveAttribute('data-value', '200.1');
 
   await editRow(page, 0);
   await clearFocusedRow(page);
   await page.keyboard.type('10 % 3');
-  await expect(result(page, 0)).toHaveText('1');
+  await expect(result(page, 0)).toHaveAttribute('data-value', '1');
 });
 
 test('keeps full precision in the result tooltip', async ({ page }) => {
   await typeInRow(page, 0, '2 / 3');
-  await expect(result(page, 0)).toHaveText('0.666666666667'); // 12 sig figs
+  await expect(result(page, 0)).toHaveAttribute('data-value', '0.666666666667'); // 12 sig figs
   // The title carries the full-precision value (far more digits).
   await expect(result(page, 0)).toHaveAttribute('title', /^0\.6{20}/);
 });
@@ -300,7 +300,7 @@ test('clicking outside a row switches it to the typeset view', async ({
 }) => {
   await typeInRow(page, 0, '1/2');
   await page.locator('.app-header h1').click(); // focus leaves the stack
-  await expect(rowLoc(page, 0).locator('.katex')).toBeVisible();
+  await expect(rowLoc(page, 0).locator('.row-rendered .katex')).toBeVisible();
   await expect(rowLoc(page, 0).locator('.cm-content')).toHaveCount(0);
 });
 
@@ -308,20 +308,20 @@ test('typesets a division as a KaTeX fraction', async ({ page }) => {
   await typeInRow(page, 0, '1/2');
   await page.keyboard.press('Enter'); // blur row 0
   const rendered = rowLoc(page, 0);
-  await expect(rendered.locator('.katex')).toBeVisible();
-  await expect(rendered.locator('.mfrac')).toBeVisible();
+  await expect(rendered.locator('.row-rendered .katex')).toBeVisible();
+  await expect(rendered.locator('.row-rendered .mfrac')).toBeVisible();
 });
 
 test('stacks keep independent content', async ({ page }) => {
   await typeInRow(page, 0, '111');
   await page.getByRole('button', { name: 'New stack' }).click();
   await typeInRow(page, 0, '222');
-  await expect(result(page, 0)).toHaveText('222');
+  await expect(result(page, 0)).toHaveAttribute('data-value', '222');
 
   await page.getByRole('tab').first().click();
-  await expect(result(page, 0)).toHaveText('111');
+  await expect(result(page, 0)).toHaveAttribute('data-value', '111');
   await page.getByRole('tab').nth(1).click();
-  await expect(result(page, 0)).toHaveText('222');
+  await expect(result(page, 0)).toHaveAttribute('data-value', '222');
 });
 
 test('deleting the only row shows the empty state', async ({ page }) => {
@@ -348,7 +348,7 @@ test('shows an = between the expression and the result', async ({ page }) => {
 test('copies the full-precision value', async ({ page, context }) => {
   await context.grantPermissions(['clipboard-read', 'clipboard-write']);
   await typeInRow(page, 0, '2 / 3');
-  await expect(result(page, 0)).toHaveText('0.666666666667'); // 12 sig figs
+  await expect(result(page, 0)).toHaveAttribute('data-value', '0.666666666667'); // 12 sig figs
   await rowLoc(page, 0).locator('.row-copy').click();
   const clip = await page.evaluate(() => navigator.clipboard.readText());
   expect(clip).toMatch(/^0\.6{20}/); // full precision, far more digits
@@ -362,7 +362,7 @@ test('renders references as chips without a dollar sign', async ({ page }) => {
 
   const chip = rowLoc(page, 1).locator('.acalc-ref');
   await expect(chip).toHaveText('1');
-  await expect(rowLoc(page, 1).locator('.katex')).not.toContainText('$');
+  await expect(rowLoc(page, 1).locator('.row-rendered .katex')).not.toContainText('$');
 });
 
 test('the empty-row caret is full height', async ({ page }) => {
@@ -411,12 +411,12 @@ test('editing a middle row ripples to all dependents', async ({ page }) => {
   await page.keyboard.type('$1 * 2'); // row 2 = 20
   await page.keyboard.press('Enter');
   await page.keyboard.type('$2 + 5'); // row 3 = 25
-  await expect(result(page, 1)).toHaveText('20');
-  await expect(result(page, 2)).toHaveText('25');
+  await expect(result(page, 1)).toHaveAttribute('data-value', '20');
+  await expect(result(page, 2)).toHaveAttribute('data-value', '25');
 
   await editRow(page, 0);
   await clearFocusedRow(page);
   await page.keyboard.type('100');
-  await expect(result(page, 1)).toHaveText('200');
-  await expect(result(page, 2)).toHaveText('205');
+  await expect(result(page, 1)).toHaveAttribute('data-value', '200');
+  await expect(result(page, 2)).toHaveAttribute('data-value', '205');
 });

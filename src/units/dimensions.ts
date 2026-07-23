@@ -95,6 +95,15 @@ export function dimToBaseLabel(d: Dimension): string {
   return den.length > 0 ? `${numerator}/${den.join('·')}` : numerator;
 }
 
+/** The base-unit terms of a dimension, e.g. length^2 → [{m, 2}]. */
+export function dimToTerms(d: Dimension): { symbol: string; exp: number }[] {
+  const terms: { symbol: string; exp: number }[] = [];
+  for (const axis of AXES) {
+    if (d[axis] !== 0) terms.push({ symbol: BASE_SYMBOL[axis], exp: d[axis] });
+  }
+  return terms;
+}
+
 function mapAxes(fn: (axis: keyof Dimension) => number): Dimension {
   return {
     length: fn('length'),

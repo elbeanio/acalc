@@ -1,4 +1,5 @@
 import type { RowResult } from '../engine/index.ts';
+import type { Quantity, UnitTerm } from '../units/index.ts';
 
 export interface FormattedResult {
   readonly text: string;
@@ -25,4 +26,34 @@ export function formatResult(result: RowResult | undefined): FormattedResult {
     text: result.value.toDisplay(),
     title: result.value.toString(),
   };
+}
+
+/** LaTeX for a result value: the number plus its unit (superscripts, °, etc.). */
+export function quantityToLatex(quantity: Quantity): string {
+  const { value, terms } = quantity.render();
+  const number = numberToLatex(value.toDisplay());
+  const unit = termsToLatex(terms);
+  return unit ? `${number}${unit}` : number; // tight, like the plain display
+}
+
+function numberToLatex(s: string): string {
+  const m = /^(-?[\d.]+)[eE]([+-]?\d+)$/.exec(s);
+  return m ? `${m[1]}\\times10^{${Number(m[2])}}` : s;
+}
+
+function termsToLatex(terms: UnitTerm[]): string {
+  const num = terms.filter((t) => t.exp > 0).map(termLatex).join('\\,');
+  const den = terms.filter((t) => t.exp < 0).map(termLatex).join('\\,');
+  if (den === '') return num;
+  return `${num || '1'}/${den}`;
+}
+
+function termLatex(term: UnitTerm): string {
+  const symbol = term.symbol.startsWith('°')
+    ? term.symbol.length > 1
+      ? `{}^{\\circ}\\mathrm{${term.symbol.slice(1)}}`
+      : '{}^{\\circ}'
+    : `\\mathrm{${term.symbol}}`;
+  const exp = Math.abs(term.exp);
+  return exp === 1 ? symbol : `${symbol}^{${exp}}`;
 }

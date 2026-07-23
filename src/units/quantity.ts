@@ -6,14 +6,21 @@ import {
   dimMul,
   dimPow,
   dimToBaseLabel,
+  dimToTerms,
   isDimensionless,
   isSensibleDimension,
   type Dimension,
 } from './dimensions.ts';
 
-/** How to render a quantity: `shown = (base - offset) / factor`, with a label. */
+/** One unit in a display label, e.g. `{ symbol: 'm', exp: 2 }` → m². */
+export interface UnitTerm {
+  readonly symbol: string;
+  readonly exp: number;
+}
+
+/** How to render a quantity: `shown = (base - offset) / factor`, plus units. */
 export interface DisplayUnit {
-  readonly label: string;
+  readonly terms: UnitTerm[];
   readonly factor: Num;
   readonly offset: Num;
 }
@@ -46,7 +53,7 @@ export class Quantity {
   static fromUnit(value: Num, unit: ResolvedUnit): Quantity {
     const base = value.mul(unit.factor).add(unit.offset);
     return new Quantity(base, unit.dimension, {
-      label: unit.symbol,
+      terms: [{ symbol: unit.symbol, exp: 1 }],
       factor: unit.factor,
       offset: unit.offset,
     });
@@ -107,10 +114,11 @@ export class Quantity {
     const base = this.base.pow(exponent);
     if (this.isDimensionless()) return Quantity.scalar(base);
     const dimension = sensible(dimPow(this.dimension, exponent.toNumber()));
+    const n = exponent.toNumber();
     const display =
       this.display && exponent.isInteger()
         ? {
-            label: `${this.display.label}^${exponent.toString()}`,
+            terms: this.display.terms.map((t) => ({ ...t, exp: t.exp * n })),
             factor: this.display.factor.pow(exponent),
             offset: Num.ZERO,
           }
@@ -163,13 +171,22 @@ export class Quantity {
     return this.format((n) => n.toString());
   }
 
-  private format(fmt: (n: Num) => string): string {
+  /** The displayed value and its unit terms — for plain or KaTeX rendering. */
+  render(): { value: Num; terms: UnitTerm[] } {
     if (this.display) {
-      const shown = this.base.sub(this.display.offset).div(this.display.factor);
-      return `${fmt(shown)}${this.display.label}`; // unit sits next to the number
+      return {
+        value: this.base.sub(this.display.offset).div(this.display.factor),
+        terms: this.display.terms,
+      };
     }
-    if (this.isDimensionless()) return fmt(this.base);
-    return `${fmt(this.base)}${dimToBaseLabel(this.dimension)}`;
+    if (this.isDimensionless()) return { value: this.base, terms: [] };
+    return { value: this.base, terms: dimToTerms(this.dimension) };
+  }
+
+  private format(fmt: (n: Num) => string): string {
+    const { value, terms } = this.render();
+    const label = termsText(terms);
+    return label ? `${fmt(value)}${label}` : fmt(value);
   }
 
   private requireSameDimension(other: Quantity, verb: string): void {
@@ -202,7 +219,7 @@ function combineMul(a: Quantity, b: Quantity): DisplayUnit | null {
   if (b.isDimensionless() && !b.display) return a.display;
   if (a.display && b.display) {
     return {
-      label: joinMul(a.display.label, b.display.label),
+      terms: mergeTerms(a.display.terms, b.display.terms),
       factor: a.display.factor.mul(b.display.factor),
       offset: Num.ZERO,
     };
@@ -214,7 +231,7 @@ function combineDiv(a: Quantity, b: Quantity): DisplayUnit | null {
   if (b.isDimensionless() && !b.display) return a.display;
   if (a.display && b.display) {
     return {
-      label: `${a.display.label}/${b.display.label}`,
+      terms: mergeTerms(a.display.terms, negateTerms(b.display.terms)),
       factor: a.display.factor.div(b.display.factor),
       offset: Num.ZERO,
     };
@@ -222,8 +239,33 @@ function combineDiv(a: Quantity, b: Quantity): DisplayUnit | null {
   return null;
 }
 
-function joinMul(a: string, b: string): string {
-  if (a === '') return b;
-  if (b === '') return a;
-  return `${a}·${b}`;
+/** Combine term lists, summing exponents by symbol (so m·m → m²), dropping 0. */
+function mergeTerms(a: UnitTerm[], b: UnitTerm[]): UnitTerm[] {
+  const out: { symbol: string; exp: number }[] = [];
+  const index = new Map<string, number>();
+  for (const term of [...a, ...b]) {
+    const at = index.get(term.symbol);
+    if (at === undefined) {
+      index.set(term.symbol, out.length);
+      out.push({ symbol: term.symbol, exp: term.exp });
+    } else {
+      out[at]!.exp += term.exp;
+    }
+  }
+  return out.filter((t) => t.exp !== 0);
+}
+
+function negateTerms(terms: UnitTerm[]): UnitTerm[] {
+  return terms.map((t) => ({ symbol: t.symbol, exp: -t.exp }));
+}
+
+/** Plain-text unit label from terms, e.g. `m^2`, `km/h`. */
+export function termsText(terms: UnitTerm[]): string {
+  const fmt = (t: UnitTerm) =>
+    Math.abs(t.exp) === 1 ? t.symbol : `${t.symbol}^${Math.abs(t.exp)}`;
+  const num = terms.filter((t) => t.exp > 0).map(fmt);
+  const den = terms.filter((t) => t.exp < 0).map(fmt);
+  const numerator = num.join('·');
+  if (den.length === 0) return numerator;
+  return `${numerator || '1'}/${den.join('·')}`;
 }

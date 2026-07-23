@@ -9,6 +9,7 @@ import {
 } from './editor/ExpressionEditor.tsx';
 import { formatResult } from './format.ts';
 import { RenderedExpression } from './RenderedExpression.tsx';
+import { ResultView } from './ResultView.tsx';
 import { useStore } from './useStore.ts';
 
 interface RowItemProps {
@@ -133,9 +134,7 @@ export function RowItem({
       <span className="row-eq" aria-hidden="true">
         {fmt.kind === 'empty' ? '' : '='}
       </span>
-      <output className={`row-result row-result--${fmt.kind}`} title={fmt.title}>
-        {fmt.text}
-      </output>
+      <ResultView result={result} />
       <div className="row-actions">
         {copyValue !== null && (
           <button

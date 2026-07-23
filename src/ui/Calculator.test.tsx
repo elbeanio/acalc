@@ -16,7 +16,7 @@ const edit = (store: AppStore, rowId: number, source: string) =>
   act(() => store.updateRowSource(activeId(store), rowId, source));
 const results = (container: HTMLElement) =>
   Array.from(container.querySelectorAll('.row-result')).map(
-    (el) => el.textContent,
+    (el) => el.getAttribute('data-value'),
   );
 
 describe('Calculator', () => {

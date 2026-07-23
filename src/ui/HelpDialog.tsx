@@ -73,7 +73,7 @@ const SECTIONS: Section[] = [
   {
     title: 'Numbers',
     entries: [
-      { syntax: '3.14', meaning: 'decimals — exact, no floating-point errors', example: '0.1 + 0.2 = 0.3' },
+      { syntax: '3.14', meaning: 'decimal numbers' },
       { syntax: '1.5e-3', meaning: 'scientific notation', example: '= 0.0015' },
       { syntax: '×  ÷  −', meaning: 'unicode operators are accepted too' },
     ],

@@ -34,6 +34,11 @@ describe('units: quantities and arithmetic', () => {
     expect(run('sqrt(16 m^2)')).toBe('4m');
   });
 
+  it('collapses like units into powers (m·m → m^2)', () => {
+    expect(run('2 m * 3 m')).toBe('6m^2');
+    expect(run('60 km / 2 h')).toBe('30km/h');
+  });
+
   it('rejects incompatible dimensions', () => {
     expect(() => run('5 km + 3 kg')).toThrow(/Cannot add/);
   });
