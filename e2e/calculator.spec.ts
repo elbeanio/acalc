@@ -420,6 +420,13 @@ test('the first-run primer teaches the model, then gets out of the way', async (
   await expect(primer).toHaveCount(0);
 });
 
+test('the primer does not clutter new stacks', async ({ page }) => {
+  const primer = page.getByText(/each row is one complete expression/i);
+  await expect(primer).toBeVisible(); // first run
+  await page.getByRole('button', { name: 'New stack' }).click();
+  await expect(primer).toHaveCount(0); // empty, but no longer a first run
+});
+
 test('? opens help when not typing in a row', async ({ page }) => {
   await page.locator('.app-header').click(); // move focus out of the editor
   await page.keyboard.press('Shift+Slash'); // "?"

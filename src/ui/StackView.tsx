@@ -13,15 +13,19 @@ import { useStore } from './useStore.ts';
 interface StackViewProps {
   stack: Stack;
   focusRequest: FocusRequest | null;
+  /** Show the first-run primer above the rows (genuine first run only). */
+  showFirstRun?: boolean;
   onOpenHelp?: (() => void) | undefined;
 }
 
-export function StackView({ stack, focusRequest, onOpenHelp }: StackViewProps) {
+export function StackView({
+  stack,
+  focusRequest,
+  showFirstRun,
+  onOpenHelp,
+}: StackViewProps) {
   const store = useStore();
   const results = useMemo(() => computeStack(stack.rows), [stack.rows]);
-
-  // Show the newcomer primer only while nothing has been typed anywhere.
-  const isPristine = stack.rows.every((r) => r.source.trim() === '');
 
   const containerRef = useRef<HTMLDivElement>(null);
   const handles = useRef(new Map<number, EditorHandle>());
@@ -95,7 +99,7 @@ export function StackView({ stack, focusRequest, onOpenHelp }: StackViewProps) {
 
   return (
     <div className="stack" ref={containerRef}>
-      {isPristine && <FirstRunHint onOpenHelp={onOpenHelp} />}
+      {showFirstRun && <FirstRunHint onOpenHelp={onOpenHelp} />}
       {stack.rows.length === 0 ? (
         <p className="stack-empty">No rows yet.</p>
       ) : (

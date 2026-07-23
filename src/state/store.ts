@@ -38,6 +38,8 @@ export interface StoreSnapshot {
   readonly canRedo: boolean;
   /** Set when a row should receive focus; null otherwise. */
   readonly focus: FocusRequest | null;
+  /** True when this session began with no persisted state (a genuine first run). */
+  readonly startedFresh: boolean;
 }
 
 type IdGenerator = () => string;
@@ -67,6 +69,8 @@ export class AppStore {
   private activeStackId: string | null;
   private readonly listeners = new Set<() => void>();
   private snapshot: StoreSnapshot;
+  /** Whether this session started with no persisted state; constant for its life. */
+  private readonly startedFresh: boolean;
   private focusRequest: FocusRequest | null = null;
   private focusToken = 0;
   /** Tracks the last edit so consecutive same-row edits can be coalesced. */
@@ -78,6 +82,7 @@ export class AppStore {
     private readonly now: Clock = defaultClock,
   ) {
     const loaded = deserialize(adapter.load());
+    this.startedFresh = loaded === null;
     const initial = loaded ?? createInitialState(this.genId());
     this.order = initial.document.stacks.map((s) => s.id);
     for (const stack of initial.document.stacks) {
@@ -263,6 +268,7 @@ export class AppStore {
       canUndo: active ? canUndo(active) : false,
       canRedo: active ? canRedo(active) : false,
       focus: this.focusRequest,
+      startedFresh: this.startedFresh,
     };
   }
 

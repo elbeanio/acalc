@@ -34,6 +34,16 @@ export function Calculator({
     (s) => s.id === snapshot.activeStackId,
   );
 
+  // The newcomer primer is for a genuine first run only: no state was ever
+  // loaded and the document is still the untouched single empty stack. It's
+  // gone for good once anything is typed — and never returns for new tabs.
+  const { stacks } = snapshot.document;
+  const showFirstRun =
+    snapshot.startedFresh &&
+    stacks.length === 1 &&
+    stacks[0]!.rows.length === 1 &&
+    stacks[0]!.rows[0]!.source.trim() === '';
+
   return (
     <div className="calculator">
       <StackTabs
@@ -46,6 +56,7 @@ export function Calculator({
           <StackView
             stack={active}
             focusRequest={snapshot.focus}
+            showFirstRun={showFirstRun}
             onOpenHelp={onOpenHelp}
           />
         </>

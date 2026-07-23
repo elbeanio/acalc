@@ -2,7 +2,7 @@ import { describe, it, expect, afterEach, vi } from 'vitest';
 import { act, cleanup, fireEvent, screen } from '@testing-library/react';
 import { Calculator } from './Calculator.tsx';
 import { renderWithStore } from './test-utils.tsx';
-import type { AppStore } from '../state/index.ts';
+import { AppStore, MemoryStorageAdapter } from '../state/index.ts';
 
 afterEach(cleanup);
 
@@ -47,6 +47,24 @@ describe('Calculator', () => {
     const { store } = renderWithStore(<Calculator />);
     expect(screen.queryByText(/one complete expression/i)).not.toBeNull();
     edit(store, 1, '3 + 3');
+    expect(screen.queryByText(/one complete expression/i)).toBeNull();
+  });
+
+  it('hides the primer once a second stack exists (not just any empty stack)', () => {
+    renderWithStore(<Calculator />);
+    expect(screen.queryByText(/one complete expression/i)).not.toBeNull();
+    fireEvent.click(screen.getByRole('button', { name: 'New stack' }));
+    // The new tab is empty too, but the model has clearly been discovered.
+    expect(screen.queryByText(/one complete expression/i)).toBeNull();
+  });
+
+  it('never shows the primer for a returning user (persisted state exists)', () => {
+    const adapter = new MemoryStorageAdapter();
+    let n = 0;
+    const ids = () => `stack-${++n}`;
+    new AppStore(adapter, ids); // first run persists the initial state
+    const returning = new AppStore(adapter, ids); // now loads it → not fresh
+    renderWithStore(<Calculator />, returning);
     expect(screen.queryByText(/one complete expression/i)).toBeNull();
   });
 
