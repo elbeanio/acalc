@@ -1,4 +1,5 @@
 import { useEffect, useRef } from 'react';
+import { SHORTCUTS } from './shortcuts.ts';
 
 interface Entry {
   syntax: string;
@@ -51,8 +52,8 @@ const SECTIONS: Section[] = [
     title: 'References',
     entries: [
       { syntax: '$1, $2, …', meaning: 'the result of another row, by its number', example: '$1 * 10' },
+      { syntax: '$', meaning: 'opens a picker of every row and its value' },
       { syntax: '$name', meaning: 'reference a named row', example: '$total * 1.2' },
-      { syntax: 'type  $', meaning: 'opens a picker of every row and its value' },
       { syntax: 'name box', meaning: 'the box on the left names a row, so you can use $name' },
     ],
   },
@@ -82,10 +83,9 @@ const SECTIONS: Section[] = [
     entries: [
       { syntax: 'Enter', meaning: 'new row below' },
       { syntax: '↑ / ↓', meaning: 'move to the row above / below' },
-      { syntax: '⌥↑ / ⌥↓', meaning: 'reorder the current row' },
-      { syntax: '⌘⇧⌫', meaning: 'delete the current row' },
-      { syntax: '⌘Z / ⌘⇧Z', meaning: 'undo / redo (per stack)' },
-      { syntax: '$', meaning: 'insert a reference' },
+      { syntax: `${SHORTCUTS.moveUp} / ${SHORTCUTS.moveDown}`, meaning: 'reorder the current row' },
+      { syntax: SHORTCUTS.deleteRow, meaning: 'delete the current row' },
+      { syntax: `${SHORTCUTS.undo} / ${SHORTCUTS.redo}`, meaning: 'undo / redo (per stack)' },
       { syntax: '?', meaning: 'open this help' },
     ],
   },

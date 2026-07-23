@@ -1,5 +1,6 @@
 import { useEffect } from 'react';
 import { prewarmKatex } from './katex-loader.ts';
+import { SHORTCUTS } from './shortcuts.ts';
 import { StackTabs } from './StackTabs.tsx';
 import { StackToolbar } from './StackToolbar.tsx';
 import { StackView } from './StackView.tsx';
@@ -37,17 +38,15 @@ export function Calculator() {
       />
       {active && (
         <>
-          <StackToolbar
-            stack={active}
-            canUndo={snapshot.canUndo}
-            canRedo={snapshot.canRedo}
-          />
+          <StackToolbar stack={active} />
           <StackView stack={active} focusRequest={snapshot.focus} />
         </>
       )}
       <p className="hints">
-        <kbd>Enter</kbd> new row · <kbd>$</kbd> reference · <kbd>⌥↑</kbd>
-        <kbd>⌥↓</kbd> move · <kbd>⌘⇧⌫</kbd> delete row · <kbd>⌘Z</kbd> undo
+        <kbd>Enter</kbd> new row · <kbd>$</kbd> reference ·{' '}
+        <kbd>{SHORTCUTS.moveUp}</kbd>
+        <kbd>{SHORTCUTS.moveDown}</kbd> move · <kbd>{SHORTCUTS.deleteRow}</kbd>{' '}
+        delete row · <kbd>{SHORTCUTS.undo}</kbd> undo · <kbd>?</kbd> help
       </p>
     </div>
   );

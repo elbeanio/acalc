@@ -11,17 +11,37 @@ export function StackTabs({ document, activeStackId }: StackTabsProps) {
   return (
     <div className="tabs" role="tablist">
       {document.stacks.map((stack) => (
-        <button
+        <div
           key={stack.id}
           role="tab"
+          tabIndex={0}
           aria-selected={stack.id === activeStackId}
-          className={
-            'tab' + (stack.id === activeStackId ? ' tab--active' : '')
-          }
+          className={'tab' + (stack.id === activeStackId ? ' tab--active' : '')}
           onClick={() => store.setActiveStack(stack.id)}
+          onKeyDown={(e) => {
+            if (e.key === 'Enter' || e.key === ' ') {
+              e.preventDefault();
+              store.setActiveStack(stack.id);
+            }
+          }}
         >
-          {stack.name}
-        </button>
+          <span className="tab-label">{stack.name}</span>
+          <button
+            className="tab-close"
+            title="Close stack"
+            aria-label={`Close ${stack.name}`}
+            onClick={(e) => {
+              e.stopPropagation();
+              if (
+                globalThis.confirm(`Delete stack "${stack.name}" and all its rows?`)
+              ) {
+                store.deleteStack(stack.id);
+              }
+            }}
+          >
+            ×
+          </button>
+        </div>
       ))}
       <button
         className="tab tab--add"
