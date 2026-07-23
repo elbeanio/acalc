@@ -1,4 +1,4 @@
-import { describe, it, expect, afterEach } from 'vitest';
+import { describe, it, expect, afterEach, vi } from 'vitest';
 import { act, cleanup, fireEvent, screen } from '@testing-library/react';
 import { Calculator } from './Calculator.tsx';
 import { renderWithStore } from './test-utils.tsx';
@@ -41,6 +41,22 @@ describe('Calculator', () => {
     const { store, container } = renderWithStore(<Calculator />);
     edit(store, 1, '$99 + 1');
     expect(results(container)).toContain('#ref!($99)');
+  });
+
+  it('shows the first-run primer while empty and hides it once typing starts', () => {
+    const { store } = renderWithStore(<Calculator />);
+    expect(screen.queryByText(/one complete expression/i)).not.toBeNull();
+    edit(store, 1, '3 + 3');
+    expect(screen.queryByText(/one complete expression/i)).toBeNull();
+  });
+
+  it('opens help from the first-run primer', () => {
+    const onOpenHelp = vi.fn();
+    renderWithStore(<Calculator onOpenHelp={onOpenHelp} />);
+    fireEvent.click(
+      screen.getByRole('button', { name: /open the cheat sheet/i }),
+    );
+    expect(onOpenHelp).toHaveBeenCalledOnce();
   });
 
   it('adds a new stack via the + tab', () => {

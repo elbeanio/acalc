@@ -132,6 +132,35 @@ export function HelpDialog({
             ×
           </button>
         </div>
+        <section className="help-section help-lead">
+          <h3>How it works</h3>
+          <p>
+            Each row holds <strong>one complete expression</strong> — not a
+            single number or operator. Press <kbd>Enter</kbd> for a new row, and
+            reference an earlier result with <code>$n</code> (or <code>$name</code>{' '}
+            if you name a row in the left box).
+          </p>
+          <table className="help-example-stack">
+            <tbody>
+              <tr>
+                <td className="frh-expr">3 + 3</td>
+                <td className="frh-arrow">→</td>
+                <td className="frh-result">
+                  <span className="frh-ref">$1</span> = 6
+                </td>
+              </tr>
+              <tr>
+                <td className="frh-expr">
+                  <span className="frh-ref">$1</span> * 2
+                </td>
+                <td className="frh-arrow">→</td>
+                <td className="frh-result">
+                  <span className="frh-ref">$2</span> = 12
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </section>
         {SECTIONS.map((section) => (
           <section key={section.title} className="help-section">
             <h3>{section.title}</h3>

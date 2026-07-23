@@ -6,17 +6,22 @@ import type {
   EditorHandle,
   ReferenceOption,
 } from './editor/ExpressionEditor.tsx';
+import { FirstRunHint } from './FirstRunHint.tsx';
 import { RowItem } from './RowItem.tsx';
 import { useStore } from './useStore.ts';
 
 interface StackViewProps {
   stack: Stack;
   focusRequest: FocusRequest | null;
+  onOpenHelp?: (() => void) | undefined;
 }
 
-export function StackView({ stack, focusRequest }: StackViewProps) {
+export function StackView({ stack, focusRequest, onOpenHelp }: StackViewProps) {
   const store = useStore();
   const results = useMemo(() => computeStack(stack.rows), [stack.rows]);
+
+  // Show the newcomer primer only while nothing has been typed anywhere.
+  const isPristine = stack.rows.every((r) => r.source.trim() === '');
 
   const containerRef = useRef<HTMLDivElement>(null);
   const handles = useRef(new Map<number, EditorHandle>());
@@ -90,6 +95,7 @@ export function StackView({ stack, focusRequest }: StackViewProps) {
 
   return (
     <div className="stack" ref={containerRef}>
+      {isPristine && <FirstRunHint onOpenHelp={onOpenHelp} />}
       {stack.rows.length === 0 ? (
         <p className="stack-empty">No rows yet.</p>
       ) : (

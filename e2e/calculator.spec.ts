@@ -395,11 +395,29 @@ test('the help cheat sheet opens, lists functions, and closes', async ({
 }) => {
   await page.getByRole('button', { name: 'Help' }).click();
   await expect(page.getByRole('heading', { name: 'acalc cheat sheet' })).toBeVisible();
+  // The "How it works" lead block (text unique to the dialog).
+  await expect(page.getByText(/not a single number or operator/)).toBeVisible();
   await expect(page.getByText('square root')).toBeVisible();
   await expect(page.getByText('sqrt(16) = 4')).toBeVisible();
 
   await page.keyboard.press('Escape');
   await expect(page.getByText('square root')).not.toBeVisible();
+});
+
+test('the first-run primer teaches the model, then gets out of the way', async ({
+  page,
+}) => {
+  const primer = page.getByText(/each row is one complete expression/i);
+  await expect(primer).toBeVisible(); // shown on a fresh, empty stack
+
+  // It opens the full cheat sheet.
+  await page.getByRole('button', { name: /open the cheat sheet/i }).click();
+  await expect(page.getByRole('heading', { name: 'acalc cheat sheet' })).toBeVisible();
+  await page.keyboard.press('Escape');
+
+  // It disappears the moment a row has content.
+  await typeInRow(page, 0, '3 + 3');
+  await expect(primer).toHaveCount(0);
 });
 
 test('? opens help when not typing in a row', async ({ page }) => {

@@ -33,7 +33,7 @@ export function App() {
           ?
         </button>
       </header>
-      <Calculator />
+      <Calculator onOpenHelp={() => setHelpOpen(true)} />
       <HelpDialog open={helpOpen} onClose={() => setHelpOpen(false)} />
     </main>
   );

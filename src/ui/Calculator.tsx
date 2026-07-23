@@ -6,7 +6,11 @@ import { StackToolbar } from './StackToolbar.tsx';
 import { StackView } from './StackView.tsx';
 import { useSnapshot, useStore } from './useStore.ts';
 
-export function Calculator() {
+export function Calculator({
+  onOpenHelp,
+}: {
+  onOpenHelp?: (() => void) | undefined;
+}) {
   const store = useStore();
   const snapshot = useSnapshot();
 
@@ -39,7 +43,11 @@ export function Calculator() {
       {active && (
         <>
           <StackToolbar stack={active} />
-          <StackView stack={active} focusRequest={snapshot.focus} />
+          <StackView
+            stack={active}
+            focusRequest={snapshot.focus}
+            onOpenHelp={onOpenHelp}
+          />
         </>
       )}
       <p className="hints">

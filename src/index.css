@@ -469,6 +469,86 @@ body {
   font-size: 0.9rem;
 }
 
+/* --- first-run primer --- */
+.first-run-hint {
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--result-bg);
+  padding: 0.9rem 1.1rem;
+  margin-bottom: 0.4rem;
+}
+
+.first-run-hint__lead {
+  margin: 0;
+  font-size: 0.9rem;
+  color: var(--fg);
+}
+
+.first-run-hint__lead code,
+.help-lead code {
+  font-family: var(--mono);
+  color: var(--syntax-ref);
+}
+
+.first-run-hint kbd {
+  font-family: var(--mono);
+  font-size: 0.75rem;
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  padding: 0.05rem 0.3rem;
+}
+
+.first-run-hint__example,
+.help-example-stack {
+  margin: 0.7rem 0;
+  border-collapse: collapse;
+  font-family: var(--mono);
+  font-size: 0.9rem;
+}
+
+.first-run-hint__example td,
+.help-example-stack td {
+  padding: 0.15rem 0.6rem 0.15rem 0;
+}
+
+.frh-arrow {
+  color: var(--muted);
+}
+
+.frh-result {
+  color: var(--muted);
+}
+
+.frh-ref {
+  color: var(--ref-chip-fg);
+  background: var(--ref-chip-bg);
+  border-radius: 0.5em;
+  padding: 0.02em 0.35em;
+}
+
+.first-run-hint__foot {
+  margin: 0;
+  font-size: 0.85rem;
+  color: var(--muted);
+}
+
+.first-run-hint__link {
+  border: none;
+  background: none;
+  padding: 0;
+  font: inherit;
+  color: var(--accent);
+  cursor: pointer;
+  text-decoration: underline;
+}
+
+/* The "How it works" lead block at the top of the cheat sheet. */
+.help-lead p {
+  margin: 0.35rem 0 0;
+  font-size: 0.9rem;
+}
+
 .hints {
   margin-top: 1.5rem;
   color: var(--muted);
