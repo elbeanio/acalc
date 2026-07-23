@@ -27,6 +27,12 @@ describe('formatSource (canonical reformatting)', () => {
     expect(fmt('2^3^2')).toBe('2 ^ 3 ^ 2'); // right-associative, no parens
   });
 
+  it('keeps units tight, but spaces after a letter-ending value', () => {
+    expect(fmt('5 km')).toBe('5km');
+    expect(fmt('(2+3) km')).toBe('(2 + 3)km');
+    expect(fmt('pi rad')).toBe('pi rad'); // "pirad" would be one identifier
+  });
+
   it('is idempotent', () => {
     const once = fmt('4*(4+4)')!;
     expect(fmt(once)).toBe(once);

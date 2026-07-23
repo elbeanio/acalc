@@ -122,6 +122,10 @@ describe('parser: units', () => {
   it('a number times a bare unit still parses', () => {
     expect(sx('5 km / 2')).toBe('(/ (qty 5 km) 2)');
   });
+
+  it('a unit after a power attaches to the whole power', () => {
+    expect(sx('2^40 bytes')).toBe('(qty (^ 2 40) bytes)');
+  });
 });
 
 describe('parser error handling', () => {

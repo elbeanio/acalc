@@ -108,10 +108,23 @@ class Parser {
     const base = this.parsePostfix();
     if (this.peek().type === 'caret') {
       this.advance();
-      const exponent = this.parseUnary();
+      // A bare unary (no unit juxtaposition), so `2^40 bytes` is `(2^40) bytes`,
+      // not `2^(40 bytes)`.
+      const exponent = this.parseBareUnary();
       return { type: 'binary', op: '^', left: base, right: exponent };
     }
     return base;
+  }
+
+  // Like parseUnary but without unit juxtaposition (for `^` exponents).
+  private parseBareUnary(): Node {
+    const t = this.peek().type;
+    if (t === 'minus' || t === 'plus') {
+      this.advance();
+      const operand = this.parseBareUnary();
+      return { type: 'unary', op: t === 'minus' ? '-' : '+', operand };
+    }
+    return this.parsePower();
   }
 
   private parsePostfix(): Node {

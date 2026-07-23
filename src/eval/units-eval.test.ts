@@ -39,6 +39,11 @@ describe('units: quantities and arithmetic', () => {
     expect(run('60 km / 2 h')).toBe('30km/h');
   });
 
+  it('a unit attaches after a power or a constant', () => {
+    expect(run('2^10 bytes')).toBe('1024B');
+    expect(run('pi rad')).toBe('3.14159265359rad');
+  });
+
   it('rejects incompatible dimensions', () => {
     expect(() => run('5 km + 3 kg')).toThrow(/Cannot add/);
   });

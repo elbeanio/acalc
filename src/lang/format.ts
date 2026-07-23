@@ -92,8 +92,13 @@ function renderInner(node: Node): string {
       return `${node.name}(${node.args.map((a) => render(a, 0)).join(', ')})`;
     case 'unit':
       return node.name;
-    case 'quantity':
-      return `${render(node.value, PREC.postfix)}${renderUnit(node.unit)}`;
+    case 'quantity': {
+      // Keep a space if the value ends in a letter (e.g. `pi rad`), else they'd
+      // glue into one identifier ("pirad"); numbers/parens can sit tight (`5km`).
+      const value = render(node.value, PREC.postfix);
+      const sep = /[A-Za-z_]$/.test(value) ? ' ' : '';
+      return `${value}${sep}${renderUnit(node.unit)}`;
+    }
     case 'convert':
       return `${render(node.value, 0)} to ${renderUnit(node.unit)}`;
   }
