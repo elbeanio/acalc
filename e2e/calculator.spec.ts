@@ -345,13 +345,16 @@ test('shows an = between the expression and the result', async ({ page }) => {
   await expect(rowLoc(page, 0).locator('.row-eq')).toHaveText('=');
 });
 
-test('copies the full-precision value', async ({ page, context }) => {
+test('copies the displayed value (12 SF), matching the cell', async ({
+  page,
+  context,
+}) => {
   await context.grantPermissions(['clipboard-read', 'clipboard-write']);
   await typeInRow(page, 0, '2 / 3');
   await expect(result(page, 0)).toHaveAttribute('data-value', '0.666666666667'); // 12 sig figs
   await rowLoc(page, 0).locator('.row-copy').click();
   const clip = await page.evaluate(() => navigator.clipboard.readText());
-  expect(clip).toMatch(/^0\.6{20}/); // full precision, far more digits
+  expect(clip).toBe('0.666666666667'); // what you see, no full-precision noise tail
 });
 
 test('renders references as chips without a dollar sign', async ({ page }) => {

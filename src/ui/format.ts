@@ -1,5 +1,5 @@
 import type { RowResult } from '../engine/index.ts';
-import type { Quantity, UnitTerm } from '../units/index.ts';
+import { termsText, type Quantity, type UnitTerm } from '../units/index.ts';
 
 export interface FormattedResult {
   readonly text: string;
@@ -26,6 +26,25 @@ export function formatResult(result: RowResult | undefined): FormattedResult {
     text: result.value.toDisplay(),
     title: result.value.toString(),
   };
+}
+
+/**
+ * Clipboard text for a result: the displayed value (12 SF, same as on screen)
+ * plus an ASCII-safe unit label. Non-ASCII glyphs (°C, °F, °, ·) are
+ * transliterated to plain ASCII so a pasted value doesn't carry a stray degree
+ * sign into Excel, email, etc.; the ASCII forms (`C`, `F`, `deg`) still
+ * round-trip back into acalc as input. Full internal precision is deliberately
+ * not copied — it only feeds internal references, and emitting all 40 digits
+ * would leak rounding-noise tails (e.g. 68°F → 68.000…03) onto the clipboard.
+ */
+export function copyText(quantity: Quantity): string {
+  const { value, terms } = quantity.render();
+  const label = termsText(terms)
+    .replace(/°C/g, 'C')
+    .replace(/°F/g, 'F')
+    .replace(/°/g, 'deg')
+    .replace(/·/g, '*');
+  return `${value.toDisplay()}${label}`;
 }
 
 /** LaTeX for a result value: the number plus its unit (superscripts, °, etc.). */

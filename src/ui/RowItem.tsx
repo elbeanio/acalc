@@ -7,7 +7,7 @@ import {
   type EditorHandle,
   type ReferenceOption,
 } from './editor/ExpressionEditor.tsx';
-import { formatResult } from './format.ts';
+import { copyText, formatResult } from './format.ts';
 import { RenderedExpression } from './RenderedExpression.tsx';
 import { ResultView } from './ResultView.tsx';
 import { useStore } from './useStore.ts';
@@ -77,7 +77,7 @@ export function RowItem({
   };
 
   const fmt = formatResult(result);
-  const copyValue = result?.status === 'ok' ? result.value.toString() : null;
+  const copyValue = result?.status === 'ok' ? copyText(result.value) : null;
 
   const handleCopy = async () => {
     if (copyValue === null) return;
