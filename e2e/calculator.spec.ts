@@ -1,3 +1,4 @@
+import fs from 'node:fs';
 import { test, expect, type Page } from '@playwright/test';
 
 // --- helpers ---------------------------------------------------------------
@@ -484,4 +485,30 @@ test('a corrupt share link is ignored, not fatal', async ({ browser }) => {
     p2.getByRole('button', { name: /shareable link/i }),
   ).toBeVisible();
   await recipient.close();
+});
+
+test('exports the stack to a downloadable file', async ({ page }) => {
+  await typeInRow(page, 0, '3 + 3'); // $1 = 6
+  await page.keyboard.press('Enter');
+  await page.keyboard.type('$1 * 2'); // $2 = 12
+
+  await page.getByRole('button', { name: 'Export' }).click();
+  const preview = page.getByRole('textbox', { name: 'Export preview' });
+  await expect(preview).toBeVisible();
+  await expect(preview).toHaveValue(/6 \* 2/); // markdown + resolve on by default
+
+  await page.getByRole('radio', { name: 'Plain text' }).check();
+  await expect(preview).toHaveValue('3 + 3 = 6\n6 * 2 = 12');
+
+  await page.getByRole('checkbox', { name: /Resolve/ }).uncheck();
+  await expect(preview).toHaveValue('3 + 3 = 6\n$1 * 2 = 12');
+
+  const [download] = await Promise.all([
+    page.waitForEvent('download'),
+    page.getByRole('button', { name: /Download/ }).click(),
+  ]);
+  expect(download.suggestedFilename()).toBe('untitled.txt');
+  expect(fs.readFileSync(await download.path(), 'utf8')).toBe(
+    '3 + 3 = 6\n$1 * 2 = 12',
+  );
 });

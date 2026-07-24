@@ -1,11 +1,13 @@
 import { useEffect, useState } from 'react';
 import { encodeStack, type Stack } from '../state/index.ts';
+import { ExportDialog } from './ExportDialog.tsx';
 import { useStore } from './useStore.ts';
 
 export function StackToolbar({ stack }: { stack: Stack }) {
   const store = useStore();
   const [name, setName] = useState(stack.name);
   const [shared, setShared] = useState(false);
+  const [exportOpen, setExportOpen] = useState(false);
 
   useEffect(() => setName(stack.name), [stack.id, stack.name]);
 
@@ -34,13 +36,25 @@ export function StackToolbar({ stack }: { stack: Stack }) {
         }}
       />
       <button
-        className="stack-share"
+        className="toolbar-button stack-export"
+        onClick={() => setExportOpen(true)}
+        title="Export this stack to a file"
+      >
+        Export
+      </button>
+      <button
+        className="toolbar-button"
         onClick={share}
         title="Copy a shareable link to this stack"
         aria-label="Copy a shareable link to this stack"
       >
         {shared ? 'Link copied' : 'Share'}
       </button>
+      <ExportDialog
+        stack={stack}
+        open={exportOpen}
+        onClose={() => setExportOpen(false)}
+      />
     </div>
   );
 }

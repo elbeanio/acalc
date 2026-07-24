@@ -278,8 +278,7 @@ body {
   border-color: var(--accent);
 }
 
-.stack-share {
-  margin-left: auto;
+.toolbar-button {
   border: 1px solid var(--border);
   background: none;
   color: var(--muted);
@@ -290,9 +289,95 @@ body {
   white-space: nowrap;
 }
 
-.stack-share:hover {
+.toolbar-button:hover {
   color: var(--accent);
   border-color: var(--accent);
+}
+
+/* First button in the right-hand cluster pushes the group to the edge. */
+.stack-export {
+  margin-left: auto;
+}
+
+/* --- export dialog --- */
+.export-dialog {
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 0;
+  max-width: 40rem;
+  width: calc(100% - 2rem);
+  background: var(--bg);
+  color: var(--fg);
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.25);
+}
+
+.export-dialog::backdrop {
+  background: rgba(0, 0, 0, 0.4);
+}
+
+.export-inner {
+  padding: 1.25rem 1.5rem 1.5rem;
+}
+
+.export-controls {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 1rem 1.5rem;
+  margin: 1rem 0 0.75rem;
+}
+
+.export-formats {
+  display: flex;
+  gap: 1rem;
+}
+
+.export-format,
+.export-resolve {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  font-size: 0.9rem;
+  cursor: pointer;
+}
+
+.export-resolve code {
+  font-family: var(--mono);
+  color: var(--syntax-ref);
+}
+
+.export-preview {
+  width: 100%;
+  box-sizing: border-box;
+  font-family: var(--mono);
+  font-size: 0.8rem;
+  line-height: 1.5;
+  color: var(--fg);
+  background: var(--result-bg);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 0.6rem 0.75rem;
+  resize: vertical;
+}
+
+.export-actions {
+  margin-top: 0.9rem;
+  display: flex;
+  justify-content: flex-end;
+}
+
+.export-download {
+  border: 1px solid var(--accent);
+  background: var(--accent);
+  color: #fff;
+  font-size: 0.9rem;
+  padding: 0.45rem 0.9rem;
+  border-radius: 6px;
+  cursor: pointer;
+}
+
+.export-download:hover {
+  opacity: 0.9;
 }
 
 /* --- rows --- */
