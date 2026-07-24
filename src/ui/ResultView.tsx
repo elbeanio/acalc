@@ -29,7 +29,7 @@ export function ResultView({ result }: { result: RowResult | undefined }) {
     if (!ready || !render || fmt.kind !== 'value' || result?.status !== 'ok') {
       return null;
     }
-    return render(quantityToLatex(result.value), {
+    return render(`\\displaystyle ${quantityToLatex(result.value)}`, {
       throwOnError: false,
       displayMode: false,
       output: 'html', // HTML only — no duplicate MathML text in the DOM

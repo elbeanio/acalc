@@ -37,7 +37,9 @@ export function RenderedExpression({
     if (!ready || !katexRender || trimmed === '') return null;
     const latex = sourceToLatex(source);
     if (latex === null) return null;
-    return katexRender(latex, {
+    // `\displaystyle` renders fractions/scripts at full size while staying
+    // inline (displayMode would centre it as a block).
+    return katexRender(`\\displaystyle ${latex}`, {
       throwOnError: false,
       displayMode: false,
       // We generate the LaTeX ourselves; only allow our reference-chip command.
