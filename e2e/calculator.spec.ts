@@ -75,6 +75,26 @@ test('$ opens the reference autocomplete and inserts a reference', async ({
   await expect(result(page, 1)).toHaveAttribute('data-value', '200');
 });
 
+test('autocompletes functions and inserts a call', async ({ page }) => {
+  await editRow(page, 0);
+  await page.keyboard.type('sqr');
+  const popup = page.locator('.cm-tooltip-autocomplete');
+  await expect(popup).toBeVisible();
+  // Click the option to accept deterministically (Enter is overloaded with
+  // "new row"). Accepting inserts sqrt() with the cursor between the parens.
+  await popup.locator('li', { hasText: 'sqrt' }).first().click();
+  await page.keyboard.type('16'); // → sqrt(16)
+  await expect(result(page, 0)).toHaveAttribute('data-value', '4');
+});
+
+test('suggests conversion targets after "to"', async ({ page }) => {
+  await editRow(page, 0);
+  await page.keyboard.type('255 to h');
+  const popup = page.locator('.cm-tooltip-autocomplete');
+  await expect(popup).toBeVisible();
+  await expect(popup).toContainText('hex'); // a base target
+});
+
 test('blurred rows are typeset, and clicking one returns to the editor', async ({
   page,
 }) => {

@@ -11,6 +11,7 @@ import {
 import { defaultKeymap } from '@codemirror/commands';
 import { Annotation, EditorState } from '@codemirror/state';
 import { drawSelection, EditorView, keymap, placeholder } from '@codemirror/view';
+import { IDENT_COMPLETIONS, UNIT_COMPLETIONS } from './completions.ts';
 import { acalcLanguageSupport } from './language.ts';
 
 /** A row that can be referenced, offered in the `$` autocomplete. */
@@ -60,19 +61,34 @@ export function ExpressionEditor(props: ExpressionEditorProps) {
     const completionSource = (
       context: CompletionContext,
     ): CompletionResult | null => {
-      const token = context.matchBefore(/\$[\w]*/);
-      if (!token || (token.from === token.to && !context.explicit)) return null;
-      const options = propsRef.current.getCompletions();
-      if (options.length === 0) return null;
-      return {
-        from: token.from,
-        options: options.map((o) => ({
-          label: o.ref,
-          detail: o.detail ?? '',
-          type: 'variable',
-        })),
-        validFor: /^\$[\w]*$/,
-      };
+      // References: after `$`, offer the other rows and their values.
+      const refToken = context.matchBefore(/\$[\w]*/);
+      if (refToken && (refToken.from !== refToken.to || context.explicit)) {
+        const options = propsRef.current.getCompletions();
+        if (options.length > 0) {
+          return {
+            from: refToken.from,
+            options: options.map((o) => ({
+              label: o.ref,
+              detail: o.detail ?? '',
+              type: 'variable',
+            })),
+            validFor: /^\$[\w]*$/,
+          };
+        }
+      }
+
+      const word = context.matchBefore(/[\w°]*/);
+      if (!word || (word.from === word.to && !context.explicit)) return null;
+
+      // Conversion targets: right after `to` / `in`, offer units and bases.
+      const before = context.state.sliceDoc(0, context.pos);
+      if (/\b(?:to|in)\s+[\w°]*$/.test(before)) {
+        return { from: word.from, options: UNIT_COMPLETIONS, validFor: /^[\w°]*$/ };
+      }
+
+      // Otherwise, an identifier: offer functions, constants and keywords.
+      return { from: word.from, options: IDENT_COMPLETIONS, validFor: /^[\w]*$/ };
     };
 
     const isCompletionOpen = (view: EditorView) =>

@@ -1,5 +1,5 @@
 import { Num } from '../num/index.ts';
-import { dim, type Dimension } from './dimensions.ts';
+import { dim, dimEqual, type Dimension } from './dimensions.ts';
 import type { ResolvedUnit } from './quantity.ts';
 
 // Base dimensions
@@ -117,4 +117,24 @@ for (const def of DEFS) {
 /** Look up a unit by name/symbol, or null if unknown. */
 export function lookupUnit(name: string): ResolvedUnit | null {
   return REGISTRY.get(name) ?? null;
+}
+
+function unitCategory(d: Dimension): string {
+  if (dimEqual(d, LENGTH)) return 'length';
+  if (dimEqual(d, MASS)) return 'mass';
+  if (dimEqual(d, TIME)) return 'time';
+  if (dimEqual(d, TEMP)) return 'temperature';
+  if (dimEqual(d, INFO)) return 'data';
+  if (dimEqual(d, CURRENCY)) return 'currency';
+  if (dimEqual(d, SPEED)) return 'speed';
+  if (dimEqual(d, NONE)) return 'angle';
+  return 'unit';
+}
+
+/** Primary units for autocomplete (one label per unit + its category). */
+export function unitCompletions(): { label: string; info: string }[] {
+  return DEFS.map((u) => ({
+    label: u.symbol ?? u.names[0]!,
+    info: unitCategory(u.dimension),
+  }));
 }
