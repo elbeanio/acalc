@@ -85,7 +85,7 @@ unitFactor = ( UNIT | "(" unitExpr ")" ) ( "^" NUMBER )? ;
 
 - A number followed by a unit is a quantity: `5 km`, `50 mph`, `20°C`. Compound
   units use `*` `/` `^`: `10 m/s`, `5 m^2`.
-- **Juxtaposed quantities sum**: `2h 30min` = `2.5 h`, `5ft 3inch` = `5.25 ft`.
+- **Juxtaposed quantities sum**: `2h 30min` = `2.5 hours`, `5ft 3inch` = `5.25 ft`.
   The parts must share a dimension (`2h 30m` is an error — `m` is metres; minutes
   are `min`).
 - `to` / `in` convert: `50 mph in km/h`, `20°C to °F`, `1 GiB in MB`.
@@ -131,7 +131,7 @@ units engine as points in time:
 **Clock times** are `H:MM` / `HH:MM:SS` literals plus the keyword `now`:
 
 - `time ± duration` → a time, wrapping past midnight (`23:00 + 3h` → `02:00`).
-- `time − time` → a duration in hours (`17:00 - 9:30` → `7.5h`).
+- `time − time` → a duration in hours (`17:00 - 9:30` → `7.5 hours`).
 - Adding two times, or mixing a date with a time, is an error (no combined
   date-time value in this version).
 

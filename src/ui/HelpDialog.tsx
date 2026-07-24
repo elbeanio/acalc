@@ -64,7 +64,7 @@ const SECTIONS: Section[] = [
     title: 'Units',
     entries: [
       { syntax: '5 km + 300 m', meaning: 'mix compatible units', example: '= 5.3km' },
-      { syntax: '2h 30min', meaning: 'juxtaposed parts sum (min, not m)', example: '= 2.5h' },
+      { syntax: '2h 30min', meaning: 'juxtaposed parts sum (min, not m)', example: '= 2.5 hours' },
       { syntax: 'x to unit  ·  x in unit', meaning: 'convert', example: '50 mph in km/h = 80.4672km/h' },
       { syntax: 'length / mass / time', meaning: 'km, mi, ft, kg, lb, s, h, day…' },
       { syntax: 'temperature', meaning: 'C, F, K (or °C, °F)', example: '20c in f = 68°F' },
@@ -78,11 +78,11 @@ const SECTIONS: Section[] = [
     title: 'Dates',
     entries: [
       { syntax: '2026-12-25', meaning: 'an ISO date', example: 'today, too' },
-      { syntax: 'date - date', meaning: 'difference, in days', example: '2026-12-25 - today = 154day' },
+      { syntax: 'date - date', meaning: 'difference, in days', example: '2026-12-25 - today = 154 days' },
       { syntax: 'date + duration', meaning: 'shift a date', example: 'today + 3 weeks' },
       { syntax: '+ months / years', meaning: 'calendar math, clamped', example: '2026-01-31 + 1 month = 2026-02-28' },
       { syntax: '9:30, now', meaning: 'clock times (wrap at midnight)', example: '23:00 + 3h = 02:00' },
-      { syntax: 'time - time', meaning: 'elapsed, in hours', example: '17:00 - 9:30 = 7.5h' },
+      { syntax: 'time - time', meaning: 'elapsed, in hours', example: '17:00 - 9:30 = 7.5 hours' },
     ],
   },
   {

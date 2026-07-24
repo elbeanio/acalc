@@ -23,6 +23,18 @@ import {
 const TIME = dim({ time: 1 });
 const SECONDS_PER_DAY = Num.of('86400');
 
+/** Spelled-out names for time-unit symbols, so durations read naturally. */
+const TIME_WORDS: Record<string, string> = {
+  ms: 'millisecond',
+  s: 'second',
+  min: 'minute',
+  h: 'hour',
+  day: 'day',
+  week: 'week',
+  month: 'month',
+  year: 'year',
+};
+
 /** A value that is a point in time rather than an amount: a date or clock time. */
 export type Temporal = 'date' | 'time';
 const SECONDS_PER_DAY_N = Num.of('86400');
@@ -255,6 +267,8 @@ export class Quantity {
   toDisplay(significantDigits?: number): string {
     if (this.temporal === 'date') return formatDay(this.base.toNumber());
     if (this.temporal === 'time') return formatClockTime(this.base.toNumber());
+    const sd = this.spelledDuration();
+    if (sd) return `${sd.value.toDisplay(significantDigits)} ${sd.word}`;
     if (this.radix) return this.base.toRadix(this.radix);
     return this.format((n) => n.toDisplay(significantDigits));
   }
@@ -262,8 +276,25 @@ export class Quantity {
   toString(): string {
     if (this.temporal === 'date') return formatDay(this.base.toNumber());
     if (this.temporal === 'time') return formatClockTime(this.base.toNumber());
+    const sd = this.spelledDuration();
+    if (sd) return `${sd.value.toString()} ${sd.word}`;
     if (this.radix) return this.base.toRadix(this.radix);
     return this.format((n) => n.toString());
+  }
+
+  /**
+   * If this is a plain single-unit time duration, its displayed value and
+   * spelled, pluralised unit word (e.g. `154 days`, `1 hour`). Physical units
+   * keep their tight symbol form; only durations read naturally.
+   */
+  spelledDuration(): { value: Num; word: string } | null {
+    if (this.temporal || !dimEqual(this.dimension, TIME)) return null;
+    const { value, terms } = this.render();
+    if (terms.length !== 1 || terms[0]!.exp !== 1) return null;
+    const singular = TIME_WORDS[terms[0]!.symbol];
+    if (!singular) return null;
+    const isOne = value.abs().cmp(Num.ONE) === 0;
+    return { value, word: isOne ? singular : `${singular}s` };
   }
 
   /** The displayed value and its unit terms — for plain or KaTeX rendering. */

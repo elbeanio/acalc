@@ -16,8 +16,8 @@ describe('dates', () => {
   });
 
   it('date − date is a duration in days', () => {
-    expect(run('2026-12-25 - 2026-12-20')).toBe('5day');
-    expect(run('2026-12-25 - today')).toBe('154day');
+    expect(run('2026-12-25 - 2026-12-20')).toBe('5 days');
+    expect(run('2026-12-25 - today')).toBe('154 days');
   });
 
   it('date ± a fixed duration shifts the date', () => {
@@ -34,7 +34,7 @@ describe('dates', () => {
   });
 
   it('a date difference converts to other units', () => {
-    expect(run('(2026-12-25 - today) in weeks')).toBe('22week');
+    expect(run('(2026-12-25 - today) in weeks')).toBe('22 weeks');
   });
 
   it('rejects nonsense', () => {
@@ -59,7 +59,7 @@ describe('clock times', () => {
   });
 
   it('time − time is a duration', () => {
-    expect(run('17:00 - 9:30')).toBe('7.5h');
+    expect(run('17:00 - 9:30')).toBe('7.5 hours');
   });
 
   it('rejects nonsense', () => {

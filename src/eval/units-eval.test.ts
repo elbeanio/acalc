@@ -16,7 +16,7 @@ describe('units: quantities and arithmetic', () => {
 
   it('adds compatible units, keeping the left unit', () => {
     expect(run('5 km + 300 m')).toBe('5.3km');
-    expect(run('1 h + 30 min')).toBe('1.5h');
+    expect(run('1 h + 30 min')).toBe('1.5 hours');
   });
 
   it('scalar multiplication keeps the unit', () => {
@@ -51,7 +51,7 @@ describe('units: quantities and arithmetic', () => {
 
 describe('compound quantities (juxtaposition sums)', () => {
   it('adds juxtaposed same-dimension quantities', () => {
-    expect(run('2h 30min')).toBe('2.5h');
+    expect(run('2h 30min')).toBe('2.5 hours');
     expect(run('5ft 3inch')).toBe('5.25ft');
     expect(run('1kg 200g')).toBe('1.2kg');
   });
@@ -115,8 +115,8 @@ describe('units: conversion (to / in)', () => {
   });
 
   it('time', () => {
-    expect(run('1 hour in minutes')).toBe('60min');
-    expect(run('1 day to hours')).toBe('24h');
+    expect(run('1 hour in minutes')).toBe('60 minutes');
+    expect(run('1 day to hours')).toBe('24 hours');
   });
 
   it('temperature (affine), with lowercase aliases', () => {

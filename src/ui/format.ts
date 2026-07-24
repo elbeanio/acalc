@@ -39,6 +39,7 @@ export function formatResult(result: RowResult | undefined): FormattedResult {
  */
 export function copyText(quantity: Quantity): string {
   if (quantity.temporal) return quantity.toDisplay(); // e.g. 2026-12-25
+  if (quantity.spelledDuration()) return quantity.toDisplay(); // e.g. 154 days
   if (quantity.radix) return quantity.toDisplay(); // e.g. 0xFF — no unit, no rounding
   const { value, terms } = quantity.render();
   const label = termsText(terms)
@@ -51,8 +52,12 @@ export function copyText(quantity: Quantity): string {
 
 /** LaTeX for a result value: the number plus its unit (superscripts, °, etc.). */
 export function quantityToLatex(quantity: Quantity): string {
-  if (quantity.temporal) return `\\text{${quantity.toDisplay()}}`; // a date
+  if (quantity.temporal) return `\\text{${quantity.toDisplay()}}`; // a date/time
   if (quantity.radix) return `\\mathtt{${quantity.toDisplay()}}`; // 0xFF in monospace
+  const duration = quantity.spelledDuration();
+  if (duration) {
+    return `${numberToLatex(duration.value.toDisplay())}\\ \\text{${duration.word}}`;
+  }
   const { value, terms } = quantity.render();
   const number = numberToLatex(value.toDisplay());
   const unit = termsToLatex(terms);
