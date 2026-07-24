@@ -64,6 +64,7 @@ const SECTIONS: Section[] = [
     title: 'Units',
     entries: [
       { syntax: '5 km + 300 m', meaning: 'mix compatible units', example: '= 5.3km' },
+      { syntax: '2h 30min', meaning: 'juxtaposed parts sum (min, not m)', example: '= 2.5h' },
       { syntax: 'x to unit  ·  x in unit', meaning: 'convert', example: '50 mph in km/h = 80.4672km/h' },
       { syntax: 'length / mass / time', meaning: 'km, mi, ft, kg, lb, s, h, day…' },
       { syntax: 'temperature', meaning: 'C, F, K (or °C, °F)', example: '20c in f = 68°F' },

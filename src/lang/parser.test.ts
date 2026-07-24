@@ -132,6 +132,22 @@ describe('parser: units', () => {
   });
 });
 
+describe('parser: compound quantities (juxtaposition sums)', () => {
+  it('sums juxtaposed quantities', () => {
+    expect(sx('2h 30min')).toBe('(+ (qty 2 h) (qty 30 min))');
+    expect(sx('1h 5min 30s')).toBe('(+ (+ (qty 1 h) (qty 5 min)) (qty 30 s))');
+  });
+
+  it('leaves multiplication and single quantities alone', () => {
+    expect(sx('2 m * 3 m')).toBe('(* (qty 2 m) (qty 3 m))');
+    expect(sx('5 km')).toBe('(qty 5 km)');
+  });
+
+  it('does not merge a plain trailing number', () => {
+    expect(() => parse('2h 30')).toThrow(ParseError);
+  });
+});
+
 describe('parser: number bases', () => {
   it('parses radix literals as numbers', () => {
     expect(sx('0xFF')).toBe('0xFF');

@@ -120,13 +120,36 @@ class Parser {
     return this.parseQuantity();
   }
 
-  // quantity = power (unitExpr)?   — juxtaposition, e.g. "5 km", "5 km/h"
+  // quantity = single ( single )*   — juxtaposed quantities sum, e.g. `2h 30min`,
+  // `5ft 3inch`. A mismatch of dimensions (`2h 30m`) is an evaluation error.
   private parseQuantity(): Node {
+    let node = this.parseSingleQuantity();
+    while (this.startsQuantity()) {
+      const right = this.parseSingleQuantity();
+      node = { type: 'binary', op: '+', left: node, right };
+    }
+    return node;
+  }
+
+  // single = power (unitExpr)?   — one value with an optional unit
+  private parseSingleQuantity(): Node {
     const value = this.parsePower();
     if (this.nextIsUnit()) {
       return { type: 'quantity', value, unit: this.parseUnitExpr() };
     }
     return value;
+  }
+
+  /** True when a `number unit …` (another quantity) follows, to be summed in. */
+  private startsQuantity(): boolean {
+    if (this.peek().type !== 'number') return false;
+    const after = this.tokens[this.pos + 1];
+    return (
+      after !== undefined &&
+      after.type === 'ident' &&
+      !CONVERSION_KEYWORDS.has(after.value) &&
+      lookupUnit(after.value) !== null
+    );
   }
 
   private parsePower(): Node {

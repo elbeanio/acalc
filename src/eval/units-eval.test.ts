@@ -49,6 +49,18 @@ describe('units: quantities and arithmetic', () => {
   });
 });
 
+describe('compound quantities (juxtaposition sums)', () => {
+  it('adds juxtaposed same-dimension quantities', () => {
+    expect(run('2h 30min')).toBe('2.5h');
+    expect(run('5ft 3inch')).toBe('5.25ft');
+    expect(run('1kg 200g')).toBe('1.2kg');
+  });
+
+  it('errors on mismatched dimensions (m is metres, not minutes)', () => {
+    expect(() => run('2h 30m')).toThrow(/add/i);
+  });
+});
+
 describe('number bases', () => {
   it('parses radix literals', () => {
     expect(run('0xFF')).toBe('255');

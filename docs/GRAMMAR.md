@@ -77,13 +77,17 @@ Values can carry units, with dimensional analysis and conversion:
 
 ```ebnf
 expression = additive ( ("to" | "in") unitExpr )* ;   (* conversion, lowest *)
-quantity   = power unitExpr? ;                         (* juxtaposition: 5 km *)
+quantity   = single ( single )* ;                     (* juxtaposed parts sum *)
+single     = power unitExpr? ;                         (* juxtaposition: 5 km *)
 unitExpr   = unitFactor ( ("*" | "/") unitFactor )* ;  (* only when a unit follows *)
 unitFactor = ( UNIT | "(" unitExpr ")" ) ( "^" NUMBER )? ;
 ```
 
 - A number followed by a unit is a quantity: `5 km`, `50 mph`, `20°C`. Compound
   units use `*` `/` `^`: `10 m/s`, `5 m^2`.
+- **Juxtaposed quantities sum**: `2h 30min` = `2.5 h`, `5ft 3inch` = `5.25 ft`.
+  The parts must share a dimension (`2h 30m` is an error — `m` is metres; minutes
+  are `min`).
 - `to` / `in` convert: `50 mph in km/h`, `20°C to °F`, `1 GiB in MB`.
 - `+` and `−` require the same dimension; `*` `/` combine dimensions.
 - **Families:** length, mass, time (+ derived speed/area/volume), temperature
