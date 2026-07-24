@@ -1,5 +1,5 @@
 import { lookupUnit } from '../units/index.ts';
-import type { Node, RefTarget } from './ast.ts';
+import type { Node, Radix, RefTarget } from './ast.ts';
 import { ParseError } from './errors.ts';
 import { tokenize } from './lexer.ts';
 import type { Token, TokenType } from './tokens.ts';
@@ -13,6 +13,18 @@ const OPERAND_START: ReadonlySet<TokenType> = new Set<TokenType>([
 ]);
 
 const CONVERSION_KEYWORDS = new Set(['to', 'in']);
+
+/** Base keywords following `to`/`in`, mapping aliases to a canonical radix. */
+const RADIX_KEYWORDS: Record<string, Radix> = {
+  hex: 'hex',
+  hexadecimal: 'hex',
+  bin: 'bin',
+  binary: 'bin',
+  oct: 'oct',
+  octal: 'oct',
+  dec: 'dec',
+  decimal: 'dec',
+};
 
 /**
  * Parse an expression string into an AST following `docs/GRAMMAR.md`.
@@ -46,11 +58,24 @@ class Parser {
       const tok = this.peek();
       if (tok.type === 'ident' && CONVERSION_KEYWORDS.has(tok.value)) {
         this.advance();
-        node = { type: 'convert', value: node, unit: this.parseUnitExpr() };
+        const radix = this.radixKeyword();
+        node = radix
+          ? { type: 'base', value: node, radix }
+          : { type: 'convert', value: node, unit: this.parseUnitExpr() };
       } else {
         return node;
       }
     }
+  }
+
+  /** If the cursor sits on a base keyword (hex/binary/…), consume it. */
+  private radixKeyword(): Radix | null {
+    const tok = this.peek();
+    if (tok.type !== 'ident') return null;
+    const radix = RADIX_KEYWORDS[tok.value];
+    if (!radix) return null;
+    this.advance();
+    return radix;
   }
 
   private parseAdditive(): Node {

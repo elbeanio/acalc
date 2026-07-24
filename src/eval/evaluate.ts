@@ -87,6 +87,18 @@ function evalNode(node: Node, ctx: Ctx): Quantity {
       return value.convertTo(target);
     }
 
+    case 'base': {
+      const value = evalNode(node.value, ctx);
+      const scalar = value.asScalar();
+      if (scalar === null) {
+        throw new EvalError(`"${node.radix}" needs a plain number, not a value with units`);
+      }
+      if (node.radix !== 'dec' && !scalar.isInteger()) {
+        throw new EvalError(`"${node.radix}" needs a whole number`);
+      }
+      return value.inRadix(node.radix === 'dec' ? null : node.radix);
+    }
+
     case 'binary':
       return evaluateBinary(node, ctx);
 

@@ -78,6 +78,8 @@ const SECTIONS: Section[] = [
     entries: [
       { syntax: '3.14', meaning: 'decimal numbers' },
       { syntax: '1.5e-3', meaning: 'scientific notation', example: '= 0.0015' },
+      { syntax: '0xFF, 0b1010, 0o777', meaning: 'hex / binary / octal literals', example: '0xFF = 255' },
+      { syntax: 'x to hex / bin / oct', meaning: 'show a result in a base', example: '255 to hex = 0xff' },
       { syntax: '×  ÷  −', meaning: 'unicode operators are accepted too' },
     ],
   },

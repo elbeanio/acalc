@@ -188,4 +188,16 @@ export class Num {
   toDisplay(significantDigits: number = DISPLAY_SIGNIFICANT_DIGITS): string {
     return this.d.toSignificantDigits(significantDigits).toString();
   }
+
+  /** This integer in the given base, prefixed (`0xff`, `0b1010`, `0o777`). */
+  toRadix(base: 'hex' | 'bin' | 'oct'): string {
+    switch (base) {
+      case 'hex':
+        return this.d.toHexadecimal();
+      case 'bin':
+        return this.d.toBinary();
+      case 'oct':
+        return this.d.toOctal();
+    }
+  }
 }

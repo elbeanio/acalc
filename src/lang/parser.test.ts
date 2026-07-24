@@ -32,6 +32,8 @@ function sexpr(node: Node): string {
       return `(conv ${sexpr(node.value)} ${sexpr(node.unit)})`;
     case 'range':
       return `(range ${node.from} ${node.to})`;
+    case 'base':
+      return `(base ${node.radix} ${sexpr(node.value)})`;
   }
 }
 
@@ -127,6 +129,20 @@ describe('parser: units', () => {
 
   it('a unit after a power attaches to the whole power', () => {
     expect(sx('2^40 bytes')).toBe('(qty (^ 2 40) bytes)');
+  });
+});
+
+describe('parser: number bases', () => {
+  it('parses radix literals as numbers', () => {
+    expect(sx('0xFF')).toBe('0xFF');
+    expect(sx('0b1010 + 1')).toBe('(+ 0b1010 1)');
+  });
+
+  it('parses a base conversion via to / in', () => {
+    expect(sx('255 to hex')).toBe('(base hex 255)');
+    expect(sx('10 in binary')).toBe('(base bin 10)');
+    expect(sx('511 to octal')).toBe('(base oct 511)');
+    expect(sx('0xFF to dec')).toBe('(base dec 0xFF)');
   });
 });
 

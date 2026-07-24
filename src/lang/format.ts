@@ -103,6 +103,8 @@ function renderInner(node: Node): string {
     }
     case 'convert':
       return `${render(node.value, 0)} to ${renderUnit(node.unit)}`;
+    case 'base':
+      return `${render(node.value, 0)} to ${node.radix}`;
   }
 }
 

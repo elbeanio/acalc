@@ -23,4 +23,8 @@ export type Node =
   | { readonly type: 'range'; readonly from: number; readonly to: number } // $1..$5 (row ids)
   | { readonly type: 'unit'; readonly name: string } // a bare unit, e.g. km
   | { readonly type: 'quantity'; readonly value: Node; readonly unit: Node } // 5 km
-  | { readonly type: 'convert'; readonly value: Node; readonly unit: Node }; // x to km
+  | { readonly type: 'convert'; readonly value: Node; readonly unit: Node } // x to km
+  | { readonly type: 'base'; readonly value: Node; readonly radix: Radix }; // x to hex
+
+/** A display base for a number, via `to hex` / `to bin` / `to oct` / `to dec`. */
+export type Radix = 'hex' | 'bin' | 'oct' | 'dec';

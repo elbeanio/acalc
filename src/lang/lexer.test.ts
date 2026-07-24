@@ -12,6 +12,19 @@ describe('lexer', () => {
     expect(tokenize('1.5e-3')[0]).toMatchObject({ value: '1.5e-3' });
   });
 
+  it('tokenises radix literals (hex / binary / octal)', () => {
+    expect(tokenize('0xFF')[0]).toMatchObject({ type: 'number', value: '0xFF' });
+    expect(tokenize('0b1010')[0]).toMatchObject({ type: 'number', value: '0b1010' });
+    expect(tokenize('0o777')[0]).toMatchObject({ type: 'number', value: '0o777' });
+    // A plain 0 / decimal is unaffected.
+    expect(tokenize('0.5')[0]).toMatchObject({ value: '0.5' });
+    expect(types('0 + 1')).toEqual(['number', 'plus', 'number', 'eof']);
+  });
+
+  it('tokenises the range operator `..`', () => {
+    expect(types('$1..$5')).toEqual(['ref', 'dotdot', 'ref', 'eof']);
+  });
+
   it('tokenises references by id and by name', () => {
     expect(tokenize('$3')[0]).toMatchObject({ type: 'ref', value: '3' });
     expect(tokenize('$total')[0]).toMatchObject({ type: 'ref', value: 'total' });

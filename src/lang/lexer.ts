@@ -1,6 +1,9 @@
 import { ParseError } from './errors.ts';
 import type { Token, TokenType } from './tokens.ts';
 
+// Radix literals: 0xFF (hex), 0b1010 (binary), 0o777 (octal). Checked before
+// the decimal rule so the leading `0` isn't eaten as its own number.
+const RADIX_RE = /0[xX][0-9a-fA-F]+|0[bB][01]+|0[oO][0-7]+/y;
 const NUMBER_RE = /(?:\d+\.?\d*|\.\d+)(?:[eE][+-]?\d+)?/y;
 // Identifiers also allow ° and µ so units like °C / µm tokenise as one word.
 const IDENT_RE = /[A-Za-z_°µ][A-Za-z0-9_°µ]*/y;
@@ -43,6 +46,17 @@ export function tokenize(source: string): Token[] {
       tokens.push({ type: 'dotdot', value: '..', start: i });
       i += 2;
       continue;
+    }
+
+    // Radix literals (0x.., 0b.., 0o..) — before the decimal rule.
+    if (ch === '0' && 'xXbBoO'.includes(source[i + 1] ?? '')) {
+      RADIX_RE.lastIndex = i;
+      const m = RADIX_RE.exec(source);
+      if (m && m.index === i) {
+        tokens.push({ type: 'number', value: m[0], start: i });
+        i += m[0].length;
+        continue;
+      }
     }
 
     // Numbers (also handles a leading-dot form like `.5`).

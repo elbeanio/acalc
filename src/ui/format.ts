@@ -38,6 +38,7 @@ export function formatResult(result: RowResult | undefined): FormattedResult {
  * would leak rounding-noise tails (e.g. 68°F → 68.000…03) onto the clipboard.
  */
 export function copyText(quantity: Quantity): string {
+  if (quantity.radix) return quantity.toDisplay(); // e.g. 0xFF — no unit, no rounding
   const { value, terms } = quantity.render();
   const label = termsText(terms)
     .replace(/°C/g, 'C')
@@ -49,6 +50,7 @@ export function copyText(quantity: Quantity): string {
 
 /** LaTeX for a result value: the number plus its unit (superscripts, °, etc.). */
 export function quantityToLatex(quantity: Quantity): string {
+  if (quantity.radix) return `\\mathtt{${quantity.toDisplay()}}`; // 0xFF in monospace
   const { value, terms } = quantity.render();
   const number = numberToLatex(value.toDisplay());
   const unit = termsToLatex(terms);

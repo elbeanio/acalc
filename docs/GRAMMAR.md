@@ -101,10 +101,21 @@ unitFactor = ( UNIT | "(" unitExpr ")" ) ( "^" NUMBER )? ;
   (`£/month`, `MB/s`) are fine, but a square (`byte²`, `money²`) is an error —
   there's no such thing as a square gigabyte.
 
+## Number bases
+
+Integers can be written in hex, binary, or octal (`0xFF`, `0b1010`, `0o777`),
+and any integer result can be *displayed* in a base by reusing the conversion
+operator: `255 to hex` → `0xff`, `0b1010 to dec` → `10`. Aliases: `hex`/
+`hexadecimal`, `bin`/`binary`, `oct`/`octal`, `dec`/`decimal`. The base is a
+display attribute (arithmetic still happens in decimal, `0xFF + 1` = `256`); it
+requires a whole, unitless number.
+
 ## Lexical grammar (tokens)
 
 ```ebnf
-NUMBER = ( DIGIT+ "."? DIGIT* | "." DIGIT+ ) ( ("e"|"E") ("+"|"-")? DIGIT+ )? ;
+NUMBER = RADIX
+       | ( DIGIT+ "."? DIGIT* | "." DIGIT+ ) ( ("e"|"E") ("+"|"-")? DIGIT+ )? ;
+RADIX  = "0x" HEXDIGIT+ | "0b" ("0"|"1")+ | "0o" OCTDIGIT+ ;  (* 0xFF 0b1010 0o777 *)
 REF    = "$" ( IDENT | DIGIT+ ) ;      (* $3 references by id; $name by name *)
 ".."   = range operator (between two REFs, in a function argument) ;
 IDENT  = ( LETTER | "_" ) ( LETTER | DIGIT | "_" )* ;

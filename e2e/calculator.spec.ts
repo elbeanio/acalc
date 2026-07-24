@@ -487,6 +487,16 @@ test('a corrupt share link is ignored, not fatal', async ({ browser }) => {
   await recipient.close();
 });
 
+test('reads radix literals and shows results in another base', async ({
+  page,
+}) => {
+  await typeInRow(page, 0, '0xFF + 1');
+  await expect(result(page, 0)).toHaveAttribute('data-value', '256');
+  await page.keyboard.press('Enter');
+  await page.keyboard.type('255 to hex');
+  await expect(result(page, 1)).toHaveAttribute('data-value', '0xff');
+});
+
 test('aggregates a range of rows and ripples on a member edit', async ({
   page,
 }) => {

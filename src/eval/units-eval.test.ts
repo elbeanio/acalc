@@ -49,6 +49,29 @@ describe('units: quantities and arithmetic', () => {
   });
 });
 
+describe('number bases', () => {
+  it('parses radix literals', () => {
+    expect(run('0xFF')).toBe('255');
+    expect(run('0b1010')).toBe('10');
+    expect(run('0o777')).toBe('511');
+    expect(run('0xFF + 1')).toBe('256');
+  });
+
+  it('displays a value in a base via to / in', () => {
+    expect(run('255 to hex')).toBe('0xff');
+    expect(run('255 in hex')).toBe('0xff');
+    expect(run('10 to binary')).toBe('0b1010');
+    expect(run('511 to oct')).toBe('0o777');
+    expect(run('0xFF to bin')).toBe('0b11111111');
+    expect(run('0xFF to dec')).toBe('255'); // back to plain decimal
+  });
+
+  it('base conversion needs a whole, unitless number', () => {
+    expect(() => run('1.5 to hex')).toThrow(/whole number/);
+    expect(() => run('5 km to hex')).toThrow(/plain number/);
+  });
+});
+
 describe('aggregate functions', () => {
   it('sum, product, avg, mean, count over plain args', () => {
     expect(run('sum(1, 2, 3)')).toBe('6');

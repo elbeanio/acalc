@@ -18,6 +18,9 @@ export interface UnitTerm {
   readonly exp: number;
 }
 
+/** A non-decimal display base for an integer value (`to hex` / `bin` / `oct`). */
+export type DisplayRadix = 'hex' | 'bin' | 'oct';
+
 /** How to render a quantity: `shown = (base - offset) / factor`, plus units. */
 export interface DisplayUnit {
   readonly terms: UnitTerm[];
@@ -42,7 +45,14 @@ export class Quantity {
     readonly base: Num,
     readonly dimension: Dimension,
     readonly display: DisplayUnit | null,
+    /** When set, an integer displayed in this base (hex/bin/oct). */
+    readonly radix: DisplayRadix | null = null,
   ) {}
+
+  /** Tag this value to display in the given base (null = plain decimal). */
+  inRadix(radix: DisplayRadix | null): Quantity {
+    return new Quantity(this.base, this.dimension, radix ? null : this.display, radix);
+  }
 
   /** A plain (dimensionless) number. */
   static scalar(value: Num): Quantity {
@@ -164,10 +174,12 @@ export class Quantity {
   }
 
   toDisplay(significantDigits?: number): string {
+    if (this.radix) return this.base.toRadix(this.radix);
     return this.format((n) => n.toDisplay(significantDigits));
   }
 
   toString(): string {
+    if (this.radix) return this.base.toRadix(this.radix);
     return this.format((n) => n.toString());
   }
 
