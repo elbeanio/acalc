@@ -44,3 +44,27 @@ describe('dates', () => {
     expect(() => run('2026-13-01')).toThrow(/not a valid date/);
   });
 });
+
+describe('clock times', () => {
+  it('time literals and now', () => {
+    expect(run('9:30')).toBe('09:30');
+    expect(run('14:00:05')).toBe('14:00:05');
+    expect(run('now')).toBe('12:00'); // NOW = 2026-07-24 12:00 local
+  });
+
+  it('time ± a duration, wrapping past midnight', () => {
+    expect(run('9:30 + 2h 45min')).toBe('12:15');
+    expect(run('23:00 + 3h')).toBe('02:00');
+    expect(run('0:30 - 1h')).toBe('23:30');
+  });
+
+  it('time − time is a duration', () => {
+    expect(run('17:00 - 9:30')).toBe('7.5h');
+  });
+
+  it('rejects nonsense', () => {
+    expect(() => run('9:30 + 10:00')).toThrow(/add two times/);
+    expect(() => run('25:00')).toThrow(/not a valid time/);
+    expect(() => run('today + 9:30')).toThrow(/not supported/);
+  });
+});

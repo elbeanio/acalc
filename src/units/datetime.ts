@@ -68,3 +68,35 @@ export function todayDay(nowMs: number): number {
   const dt = new Date(nowMs);
   return ymdToDay(dt.getFullYear(), dt.getMonth() + 1, dt.getDate());
 }
+
+const SECONDS_PER_DAY = 86400;
+
+/** Parse a clock time `H:MM` / `HH:MM:SS` to seconds since midnight, or null. */
+export function parseClockTime(s: string): number | null {
+  const match = /^(\d{1,2}):(\d{2})(?::(\d{2}))?$/.exec(s);
+  if (!match) return null;
+  const h = Number(match[1]);
+  const m = Number(match[2]);
+  const sec = match[3] ? Number(match[3]) : 0;
+  if (h > 23 || m > 59 || sec > 59) return null;
+  return h * 3600 + m * 60 + sec;
+}
+
+/** Render seconds-since-midnight as `HH:MM` (or `HH:MM:SS` if seconds ≠ 0). */
+export function formatClockTime(secondsOfDay: number): string {
+  const total =
+    ((Math.round(secondsOfDay) % SECONDS_PER_DAY) + SECONDS_PER_DAY) %
+    SECONDS_PER_DAY;
+  const h = Math.floor(total / 3600);
+  const m = Math.floor((total % 3600) / 60);
+  const s = total % 60;
+  const hh = String(h).padStart(2, '0');
+  const mm = String(m).padStart(2, '0');
+  return s === 0 ? `${hh}:${mm}` : `${hh}:${mm}:${String(s).padStart(2, '0')}`;
+}
+
+/** The current clock time (local) as seconds since midnight, from a clock in ms. */
+export function nowSeconds(nowMs: number): number {
+  const dt = new Date(nowMs);
+  return dt.getHours() * 3600 + dt.getMinutes() * 60 + dt.getSeconds();
+}

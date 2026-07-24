@@ -4,6 +4,9 @@ import type { Token, TokenType } from './tokens.ts';
 // ISO date literal, e.g. 2026-12-25. Checked before numbers so the year isn't
 // eaten as its own number and the dashes read as subtraction.
 const DATE_RE = /\d{4}-\d{2}-\d{2}/y;
+// Clock time literal, e.g. 9:30 or 14:00:05. Before numbers so the hour isn't
+// eaten as its own number.
+const TIME_RE = /\d{1,2}:\d{2}(?::\d{2})?/y;
 // Radix literals: 0xFF (hex), 0b1010 (binary), 0o777 (octal). Checked before
 // the decimal rule so the leading `0` isn't eaten as its own number.
 const RADIX_RE = /0[xX][0-9a-fA-F]+|0[bB][01]+|0[oO][0-7]+/y;
@@ -58,6 +61,17 @@ export function tokenize(source: string): Token[] {
       if (dm && dm.index === i) {
         tokens.push({ type: 'date', value: dm[0], start: i });
         i += dm[0].length;
+        continue;
+      }
+    }
+
+    // Clock time literal (H:MM / HH:MM:SS) — before numbers.
+    if (ch >= '0' && ch <= '9') {
+      TIME_RE.lastIndex = i;
+      const tm = TIME_RE.exec(source);
+      if (tm && tm.index === i) {
+        tokens.push({ type: 'time', value: tm[0], start: i });
+        i += tm[0].length;
         continue;
       }
     }

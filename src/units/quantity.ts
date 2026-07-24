@@ -1,5 +1,10 @@
 import { Num } from '../num/index.ts';
-import { addMonths, formatDay, MONTH_SECONDS } from './datetime.ts';
+import {
+  addMonths,
+  formatClockTime,
+  formatDay,
+  MONTH_SECONDS,
+} from './datetime.ts';
 import {
   dim,
   DIMENSIONLESS,
@@ -18,8 +23,9 @@ import {
 const TIME = dim({ time: 1 });
 const SECONDS_PER_DAY = Num.of('86400');
 
-/** A value that is a point in time rather than an amount (currently: a date). */
-export type Temporal = 'date';
+/** A value that is a point in time rather than an amount: a date or clock time. */
+export type Temporal = 'date' | 'time';
+const SECONDS_PER_DAY_N = Num.of('86400');
 
 /** One unit in a display label, e.g. `{ symbol: 'm', exp: 2 }` → m². */
 export interface UnitTerm {
@@ -65,11 +71,27 @@ export class Quantity {
     return new Quantity(dayNumber, DIMENSIONLESS, null, null, 'date');
   }
 
+  /** A clock time, stored as seconds since midnight, wrapped into [0, 24h). */
+  static time(secondsOfDay: Num): Quantity {
+    const wrapped = secondsOfDay.mod(SECONDS_PER_DAY_N);
+    const normalised = wrapped.isNegative() ? wrapped.add(SECONDS_PER_DAY_N) : wrapped;
+    return new Quantity(normalised, DIMENSIONLESS, null, null, 'time');
+  }
+
   /** A duration of `days`, displayed in days (result of date − date). */
   private static durationInDays(days: Num): Quantity {
     return new Quantity(days.mul(SECONDS_PER_DAY), TIME, {
       terms: [{ symbol: 'day', exp: 1 }],
       factor: SECONDS_PER_DAY,
+      offset: Num.ZERO,
+    });
+  }
+
+  /** A duration of `seconds`, displayed in hours (result of time − time). */
+  private static durationInHours(seconds: Num): Quantity {
+    return new Quantity(seconds, TIME, {
+      terms: [{ symbol: 'h', exp: 1 }],
+      factor: Num.of('3600'),
       offset: Num.ZERO,
     });
   }
@@ -138,7 +160,19 @@ export class Quantity {
       if (sign < 0) throw new UnitError('Cannot subtract a date from a duration');
       return Quantity.date(shiftDate(other.base, this.base, 1));
     }
-    throw new UnitError('That date operation is not supported');
+    // Clock time: time ± duration wraps; time − time is a duration.
+    if (this.temporal === 'time' && other.temporal === 'time') {
+      if (sign > 0) throw new UnitError('Cannot add two times of day');
+      return Quantity.durationInHours(this.base.sub(other.base));
+    }
+    if (this.temporal === 'time' && isDuration(other)) {
+      return Quantity.time(this.base.add(other.base.mul(Num.of(String(sign)))));
+    }
+    if (isDuration(this) && other.temporal === 'time') {
+      if (sign < 0) throw new UnitError('Cannot subtract a time of day from a duration');
+      return Quantity.time(other.base.add(this.base));
+    }
+    throw new UnitError('That date/time operation is not supported');
   }
 
   neg(): Quantity {
@@ -220,12 +254,14 @@ export class Quantity {
 
   toDisplay(significantDigits?: number): string {
     if (this.temporal === 'date') return formatDay(this.base.toNumber());
+    if (this.temporal === 'time') return formatClockTime(this.base.toNumber());
     if (this.radix) return this.base.toRadix(this.radix);
     return this.format((n) => n.toDisplay(significantDigits));
   }
 
   toString(): string {
     if (this.temporal === 'date') return formatDay(this.base.toNumber());
+    if (this.temporal === 'time') return formatClockTime(this.base.toNumber());
     if (this.radix) return this.base.toRadix(this.radix);
     return this.format((n) => n.toString());
   }

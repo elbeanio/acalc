@@ -1,6 +1,7 @@
 export type TokenType =
   | 'number'
   | 'date' // an ISO date literal, e.g. 2026-12-25
+  | 'time' // a clock time literal, e.g. 9:30 or 14:00:05
   | 'ref'
   | 'ident'
   | 'plus'

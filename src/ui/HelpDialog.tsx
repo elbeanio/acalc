@@ -81,6 +81,8 @@ const SECTIONS: Section[] = [
       { syntax: 'date - date', meaning: 'difference, in days', example: '2026-12-25 - today = 154day' },
       { syntax: 'date + duration', meaning: 'shift a date', example: 'today + 3 weeks' },
       { syntax: '+ months / years', meaning: 'calendar math, clamped', example: '2026-01-31 + 1 month = 2026-02-28' },
+      { syntax: '9:30, now', meaning: 'clock times (wrap at midnight)', example: '23:00 + 3h = 02:00' },
+      { syntax: 'time - time', meaning: 'elapsed, in hours', example: '17:00 - 9:30 = 7.5h' },
     ],
   },
   {

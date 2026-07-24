@@ -128,6 +128,13 @@ units engine as points in time:
   days. Adding two dates, or a bare number, is an error.
 - Durations combine by juxtaposition (`2h 30min`) or `+`; minutes are `min`.
 
+**Clock times** are `H:MM` / `HH:MM:SS` literals plus the keyword `now`:
+
+- `time ± duration` → a time, wrapping past midnight (`23:00 + 3h` → `02:00`).
+- `time − time` → a duration in hours (`17:00 - 9:30` → `7.5h`).
+- Adding two times, or mixing a date with a time, is an error (no combined
+  date-time value in this version).
+
 ## Lexical grammar (tokens)
 
 ```ebnf
@@ -135,6 +142,7 @@ NUMBER = RADIX
        | ( DIGIT+ "."? DIGIT* | "." DIGIT+ ) ( ("e"|"E") ("+"|"-")? DIGIT+ )? ;
 RADIX  = "0x" HEXDIGIT+ | "0b" ("0"|"1")+ | "0o" OCTDIGIT+ ;  (* 0xFF 0b1010 0o777 *)
 DATE   = DIGIT{4} "-" DIGIT{2} "-" DIGIT{2} ;      (* ISO date, 2026-12-25 *)
+TIME   = DIGIT DIGIT? ":" DIGIT{2} ( ":" DIGIT{2} )? ; (* clock time, 9:30 *)
 REF    = "$" ( IDENT | DIGIT+ ) ;      (* $3 references by id; $name by name *)
 ".."   = range operator (between two REFs, in a function argument) ;
 IDENT  = ( LETTER | "_" ) ( LETTER | DIGIT | "_" )* ;

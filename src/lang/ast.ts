@@ -9,6 +9,7 @@ export type BinaryOp = '+' | '-' | '*' | '/' | '%' | '^';
 export type Node =
   | { readonly type: 'number'; readonly value: string }
   | { readonly type: 'date'; readonly value: string } // ISO date literal, 2026-12-25
+  | { readonly type: 'time'; readonly value: string } // clock time literal, 9:30
   | { readonly type: 'ref'; readonly target: RefTarget }
   | { readonly type: 'identifier'; readonly name: string }
   | { readonly type: 'unary'; readonly op: '-' | '+'; readonly operand: Node }

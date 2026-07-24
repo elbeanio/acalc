@@ -495,6 +495,9 @@ test('does date arithmetic (differences and calendar shifts)', async ({
   await page.keyboard.press('Enter');
   await page.keyboard.type('2026-01-31 + 1 month'); // end-of-month clamp
   await expect(result(page, 1)).toHaveAttribute('data-value', '2026-02-28');
+  await page.keyboard.press('Enter');
+  await page.keyboard.type('23:00 + 3h'); // clock time wraps past midnight
+  await expect(result(page, 2)).toHaveAttribute('data-value', '02:00');
 });
 
 test('reads radix literals and shows results in another base', async ({

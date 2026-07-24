@@ -10,6 +10,8 @@ function sexpr(node: Node): string {
       return node.value;
     case 'date':
       return `(date ${node.value})`;
+    case 'time':
+      return `(time ${node.value})`;
     case 'identifier':
       return node.name;
     case 'ref':
@@ -158,6 +160,11 @@ describe('parser: dates', () => {
 
   it('still subtracts numbers when not a full YYYY-MM-DD', () => {
     expect(sx('2026 - 12 - 25')).toBe('(- (- 2026 12) 25)');
+  });
+
+  it('parses a clock time literal', () => {
+    expect(sx('9:30')).toBe('(time 9:30)');
+    expect(sx('14:00:05 - 9:30')).toBe('(- (time 14:00:05) (time 9:30))');
   });
 });
 

@@ -1,7 +1,12 @@
 import type { Node, RefTarget } from '../lang/index.ts';
 import { Num } from '../num/index.ts';
 import { Quantity, lookupUnit } from '../units/index.ts';
-import { parseISODate, todayDay } from '../units/datetime.ts';
+import {
+  nowSeconds,
+  parseClockTime,
+  parseISODate,
+  todayDay,
+} from '../units/datetime.ts';
 import { EvalError } from './errors.ts';
 import { applyFunction, CONSTANTS } from './functions.ts';
 
@@ -58,12 +63,21 @@ function evalNode(node: Node, ctx: Ctx): Quantity {
       return Quantity.date(Num.of(String(day)));
     }
 
+    case 'time': {
+      const secs = parseClockTime(node.value);
+      if (secs === null) throw new EvalError(`"${node.value}" is not a valid time`);
+      return Quantity.time(Num.of(String(secs)));
+    }
+
     case 'ref':
       return ctx.resolve(node.target);
 
     case 'identifier': {
       if (node.name === 'today') {
         return Quantity.date(Num.of(String(todayDay(ctx.nowMs))));
+      }
+      if (node.name === 'now') {
+        return Quantity.time(Num.of(String(nowSeconds(ctx.nowMs))));
       }
       const constant = CONSTANTS[node.name];
       if (!constant) {

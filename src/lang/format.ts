@@ -74,6 +74,8 @@ function renderInner(node: Node): string {
       return node.value;
     case 'date':
       return node.value;
+    case 'time':
+      return node.value;
     case 'identifier':
       return node.name;
     case 'ref':

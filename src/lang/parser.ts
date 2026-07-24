@@ -200,6 +200,9 @@ class Parser {
       case 'date':
         this.advance();
         return { type: 'date', value: tok.value };
+      case 'time':
+        this.advance();
+        return { type: 'time', value: tok.value };
       case 'ref':
         this.advance();
         return { type: 'ref', target: toRefTarget(tok.value) };
