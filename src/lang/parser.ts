@@ -298,17 +298,20 @@ class Parser {
     return args;
   }
 
-  // argument = expression | ref ".." ref   (a range like $1..$5, ids only)
+  // argument = expression | ref ".." ref   (a range like $1..$5 or $start..$end)
   private parseArgument(): Node {
     const expr = this.parseExpression();
     if (this.peek().type !== 'dotdot') return expr;
     const at = this.peek().start;
     this.advance();
     const upper = this.parseExpression();
-    const from = asIdRef(expr);
-    const to = asIdRef(upper);
+    const from = asRef(expr);
+    const to = asRef(upper);
     if (from === null || to === null) {
-      throw new ParseError('A range must be between two row ids, e.g. $1..$5', at);
+      throw new ParseError(
+        'A range must be between two row references, e.g. $1..$5 or $start..$end',
+        at,
+      );
     }
     return { type: 'range', from, to };
   }
@@ -353,9 +356,9 @@ class Parser {
   }
 }
 
-/** The row id if `node` is a `$id` reference, else null (names have no order). */
-function asIdRef(node: Node): number | null {
-  return node.type === 'ref' && node.target.kind === 'id' ? node.target.id : null;
+/** The reference target if `node` is a `$id` / `$name` reference, else null. */
+function asRef(node: Node): RefTarget | null {
+  return node.type === 'ref' ? node.target : null;
 }
 
 function toRefTarget(body: string): RefTarget {

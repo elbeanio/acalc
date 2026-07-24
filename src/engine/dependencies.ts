@@ -1,9 +1,9 @@
 import type { Node, RefTarget } from '../lang/index.ts';
 
-/** A range dependency, `$from..$to` over row ids (inclusive, either order). */
+/** A range dependency, `$from..$to` (endpoints by id or name, either order). */
 export interface RangeRef {
-  readonly from: number;
-  readonly to: number;
+  readonly from: RefTarget;
+  readonly to: RefTarget;
 }
 
 /** Collect every reference target appearing in an AST (in encounter order). */

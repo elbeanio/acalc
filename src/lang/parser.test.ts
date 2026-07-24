@@ -34,8 +34,11 @@ function sexpr(node: Node): string {
       return `(qty ${sexpr(node.value)} ${sexpr(node.unit)})`;
     case 'convert':
       return `(conv ${sexpr(node.value)} ${sexpr(node.unit)})`;
-    case 'range':
-      return `(range ${node.from} ${node.to})`;
+    case 'range': {
+      const r = (t: typeof node.from) =>
+        t.kind === 'id' ? `$${t.id}` : `$${t.name}`;
+      return `(range ${r(node.from)} ${r(node.to)})`;
+    }
     case 'base':
       return `(base ${node.radix} ${sexpr(node.value)})`;
   }
@@ -184,17 +187,22 @@ describe('parser: number bases', () => {
 
 describe('parser: ranges (function arguments only)', () => {
   it('parses a range of row ids', () => {
-    expect(sx('sum($1..$5)')).toBe('(sum (range 1 5))');
-    expect(sx('avg($2..$4, 10)')).toBe('(avg (range 2 4) 10)');
+    expect(sx('sum($1..$5)')).toBe('(sum (range $1 $5))');
+    expect(sx('avg($2..$4, 10)')).toBe('(avg (range $2 $4) 10)');
+  });
+
+  it('parses a range between named rows (and mixed)', () => {
+    expect(sx('sum($start..$end)')).toBe('(sum (range $start $end))');
+    expect(sx('sum($1..$total)')).toBe('(sum (range $1 $total))');
   });
 
   it('rejects a range used outside a call', () => {
     expect(() => parse('$1..$5')).toThrow(ParseError);
   });
 
-  it('rejects a range whose endpoints are not bare row ids', () => {
-    expect(() => parse('sum($total..$5)')).toThrow(ParseError); // name has no order
+  it('rejects a range whose endpoints are not bare references', () => {
     expect(() => parse('sum($1..$5 + 1)')).toThrow(ParseError); // upper is an expression
+    expect(() => parse('sum(1..5)')).toThrow(ParseError); // plain numbers, not refs
   });
 });
 

@@ -148,6 +148,24 @@ describe('computeStack: ranges and aggregates', () => {
     expect(val(withAgg('max($1..$3)'), 4)).toBe('120');
   });
 
+  it('sums a range between named rows', () => {
+    const results = compute([
+      { id: 1, name: 'start', source: '10' },
+      { id: 2, source: '20' },
+      { id: 3, name: 'end', source: '30' },
+      { id: 4, source: 'sum($start..$end)' },
+    ]);
+    expect(val(results, 4)).toBe('60');
+  });
+
+  it('flags a range with a dangling endpoint name', () => {
+    const results = compute([
+      { id: 1, source: '10' },
+      { id: 2, source: 'sum($1..$missing)' },
+    ]);
+    expect(errKind(results, 2)).toBe('ref');
+  });
+
   it('skips gaps — a deleted row inside the range is not a dangling ref', () => {
     const results = compute([
       { id: 1, source: '120' },

@@ -1,5 +1,8 @@
-import type { Node } from './ast.ts';
+import type { Node, RefTarget } from './ast.ts';
 import { parse } from './parser.ts';
+
+const refText = (t: RefTarget): string =>
+  t.kind === 'id' ? `$${t.id}` : `$${t.name}`;
 
 /**
  * Serialise an AST back to canonical source text: single spaces around binary
@@ -95,7 +98,7 @@ function renderInner(node: Node): string {
     case 'call':
       return `${node.name}(${node.args.map((a) => render(a, 0)).join(', ')})`;
     case 'range':
-      return `$${node.from}..$${node.to}`;
+      return `${refText(node.from)}..${refText(node.to)}`;
     case 'unit':
       return node.name;
     case 'quantity': {

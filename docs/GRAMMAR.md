@@ -35,16 +35,17 @@ primary      = NUMBER
 
 arguments    = argument ( "," argument )* ;
 argument     = expression | range ;
-range        = REF ".." REF ;   (* row-id range for aggregates, e.g. $1..$5 *)
+range        = REF ".." REF ;   (* row range for aggregates, e.g. $1..$5 *)
 ```
 
-A **range** `$1..$5` is only valid as a function argument. Its endpoints must be
-bare row ids (`$1`, `$5`), not names or expressions, since names have no order.
-It expands to the values of the existing rows whose id lies in `[1, 5]`
-inclusive — **gaps are skipped** (a deleted id in the range is not a dangling
-reference), and a range that spans its own row is a circular reference. Ranges
-feed the variadic aggregates: `sum`, `product`, `avg`/`mean`, `count`, `min`,
-`max` — e.g. `sum($1..$5)`, `avg($2..$8)`.
+A **range** `$1..$5` is only valid as a function argument. Its endpoints are
+bare references — ids (`$1`) or names (`$start`), which resolve to their ids; an
+unresolvable endpoint is a dangling reference. It expands to the values of the
+existing rows whose id lies between the two endpoints (inclusive, either order)
+— **gaps are skipped** (a deleted id in the range is not dangling), and a range
+that spans its own row is a circular reference. Ranges feed the variadic
+aggregates: `sum`, `product`, `avg`/`mean`, `count`, `min`, `max` — e.g.
+`sum($1..$5)`, `avg($start..$end)`.
 
 ### Precedence, lowest to highest
 

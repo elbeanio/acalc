@@ -83,10 +83,18 @@ export function computeStack(
       }
     }
     // A range depends on every existing row it spans; gaps are skipped silently
-    // (a missing id in a range is not a dangling reference).
+    // (a missing id in a range is not a dangling reference). The endpoints (by
+    // id or name) must resolve, though.
     for (const { from, to } of extractRanges(ast)) {
-      const lo = Math.min(from, to);
-      const hi = Math.max(from, to);
+      const fromId = resolveId(from);
+      const toId = resolveId(to);
+      if (fromId === undefined || toId === undefined) {
+        if (fromId === undefined) dangling.add(refLabel(from));
+        if (toId === undefined) dangling.add(refLabel(to));
+        continue;
+      }
+      const lo = Math.min(fromId, toId);
+      const hi = Math.max(fromId, toId);
       for (const id of existingIds) if (id >= lo && id <= hi) deps.add(id);
     }
     analyses.set(r.id, {
@@ -164,9 +172,15 @@ export function computeStack(
           return dep.value;
         },
         (from, to) => {
-          // Expand to the existing rows the range spans, in row order.
-          const lo = Math.min(from, to);
-          const hi = Math.max(from, to);
+          // Resolve the endpoints (id or name) and expand to the existing rows
+          // the range spans, in row order.
+          const fromId = resolveId(from);
+          const toId = resolveId(to);
+          if (fromId === undefined || toId === undefined) {
+            throw new EvalError('#ref!', 'ref');
+          }
+          const lo = Math.min(fromId, toId);
+          const hi = Math.max(fromId, toId);
           return rows
             .filter((r) => r.id >= lo && r.id <= hi)
             .map((r) => {
@@ -202,6 +216,11 @@ export function computeStack(
   }
 
   return results;
+}
+
+/** The display label for a reference target, e.g. `$3` or `$total`. */
+function refLabel(target: RefTarget): string {
+  return target.kind === 'id' ? `$${target.id}` : `$${target.name}`;
 }
 
 /** True if `start` can reach itself by following dependency edges. */

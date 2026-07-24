@@ -1,5 +1,12 @@
-import type { Node } from './ast.ts';
+import type { Node, RefTarget } from './ast.ts';
 import { parse } from './parser.ts';
+
+/** A reference target as a styled pill (id) or italic variable (name). */
+function refLatex(target: RefTarget): string {
+  return target.kind === 'id'
+    ? `\\htmlClass{acalc-ref}{${target.id}}`
+    : `\\htmlClass{acalc-var}{\\mathit{${escapeText(target.name)}}}`;
+}
 
 /**
  * Serialise an AST to a LaTeX string (for KaTeX rendering). This is the third
@@ -82,9 +89,7 @@ function renderInner(node: Node): string {
       // Drop the `$`; style references so they read as substitutions. Numeric
       // ids get a pill (so "1" isn't read as a literal); names read as an
       // italic variable. Classes are styled in CSS; needs KaTeX `trust`.
-      return node.target.kind === 'id'
-        ? `\\htmlClass{acalc-ref}{${node.target.id}}`
-        : `\\htmlClass{acalc-var}{\\mathit{${escapeText(node.target.name)}}}`;
+      return refLatex(node.target);
 
     case 'unary':
       return `${node.op === '-' ? '-' : '+'}${render(node.operand, PREC.unary)}`;
@@ -102,8 +107,8 @@ function renderInner(node: Node): string {
       return renderCall(node);
 
     case 'range':
-      // Two reference pills joined by `..`, matching the ref styling.
-      return `\\htmlClass{acalc-ref}{${node.from}}\\mathbin{..}\\htmlClass{acalc-ref}{${node.to}}`;
+      // Two references joined by `..`, matching the ref styling.
+      return `${refLatex(node.from)}\\mathbin{..}${refLatex(node.to)}`;
 
     case 'unit':
       return `\\text{${escapeText(node.name)}}`;

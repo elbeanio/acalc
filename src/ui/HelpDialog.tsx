@@ -56,7 +56,7 @@ const SECTIONS: Section[] = [
       { syntax: '$1, $2, …', meaning: 'the result of another row, by its number', example: '$1 * 10' },
       { syntax: '$', meaning: 'opens a picker of every row and its value' },
       { syntax: '$name', meaning: 'reference a named row', example: '$total * 1.2' },
-      { syntax: '$1..$5', meaning: 'a range of rows, for aggregates', example: 'sum($1..$5)' },
+      { syntax: '$1..$5', meaning: 'a range of rows (ids or names), for aggregates', example: 'sum($start..$end)' },
       { syntax: 'name box', meaning: 'the box on the left names a row, so you can use $name' },
     ],
   },

@@ -21,7 +21,7 @@ export type RefResolver = (target: RefTarget) => Quantity;
  * for aggregate functions like `sum`. Provided by the stack layer, which knows
  * which ids exist.
  */
-export type RangeResolver = (from: number, to: number) => Quantity[];
+export type RangeResolver = (from: RefTarget, to: RefTarget) => Quantity[];
 
 const noRanges: RangeResolver = () => {
   throw new EvalError(
