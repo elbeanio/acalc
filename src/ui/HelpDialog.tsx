@@ -75,6 +75,15 @@ const SECTIONS: Section[] = [
     ],
   },
   {
+    title: 'Dates',
+    entries: [
+      { syntax: '2026-12-25', meaning: 'an ISO date', example: 'today, too' },
+      { syntax: 'date - date', meaning: 'difference, in days', example: '2026-12-25 - today = 154day' },
+      { syntax: 'date + duration', meaning: 'shift a date', example: 'today + 3 weeks' },
+      { syntax: '+ months / years', meaning: 'calendar math, clamped', example: '2026-01-31 + 1 month = 2026-02-28' },
+    ],
+  },
+  {
     title: 'Numbers',
     entries: [
       { syntax: '3.14', meaning: 'decimal numbers' },

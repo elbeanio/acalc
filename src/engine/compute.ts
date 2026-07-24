@@ -22,7 +22,10 @@ interface Analysis {
  * everything that depends on it. Cycles, dangling references, parse/eval errors
  * and downstream "blocked" rows are all reported per-row rather than throwing.
  */
-export function computeStack(rows: readonly Row[]): Map<number, RowResult> {
+export function computeStack(
+  rows: readonly Row[],
+  nowMs: number = Date.now(),
+): Map<number, RowResult> {
   const results = new Map<number, RowResult>();
   const existingIds = new Set(rows.map((r) => r.id));
 
@@ -172,6 +175,7 @@ export function computeStack(rows: readonly Row[]): Map<number, RowResult> {
               return dep.value;
             });
         },
+        nowMs,
       );
       results.set(id, { status: 'ok', value });
     } catch (err) {

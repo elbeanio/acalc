@@ -69,6 +69,9 @@ function renderInner(node: Node): string {
     case 'number':
       return node.value;
 
+    case 'date':
+      return `\\text{${node.value}}`;
+
     case 'identifier':
       return CONSTANTS[node.name] ?? `\\mathrm{${escapeText(node.name)}}`;
 

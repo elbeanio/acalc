@@ -487,6 +487,16 @@ test('a corrupt share link is ignored, not fatal', async ({ browser }) => {
   await recipient.close();
 });
 
+test('does date arithmetic (differences and calendar shifts)', async ({
+  page,
+}) => {
+  await typeInRow(page, 0, '2026-12-25 - 2026-12-20');
+  await expect(result(page, 0)).toHaveAttribute('data-value', '5day');
+  await page.keyboard.press('Enter');
+  await page.keyboard.type('2026-01-31 + 1 month'); // end-of-month clamp
+  await expect(result(page, 1)).toHaveAttribute('data-value', '2026-02-28');
+});
+
 test('reads radix literals and shows results in another base', async ({
   page,
 }) => {

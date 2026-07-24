@@ -1,6 +1,9 @@
 import { ParseError } from './errors.ts';
 import type { Token, TokenType } from './tokens.ts';
 
+// ISO date literal, e.g. 2026-12-25. Checked before numbers so the year isn't
+// eaten as its own number and the dashes read as subtraction.
+const DATE_RE = /\d{4}-\d{2}-\d{2}/y;
 // Radix literals: 0xFF (hex), 0b1010 (binary), 0o777 (octal). Checked before
 // the decimal rule so the leading `0` isn't eaten as its own number.
 const RADIX_RE = /0[xX][0-9a-fA-F]+|0[bB][01]+|0[oO][0-7]+/y;
@@ -46,6 +49,17 @@ export function tokenize(source: string): Token[] {
       tokens.push({ type: 'dotdot', value: '..', start: i });
       i += 2;
       continue;
+    }
+
+    // ISO date literal (YYYY-MM-DD) — before numbers.
+    if (ch >= '0' && ch <= '9') {
+      DATE_RE.lastIndex = i;
+      const dm = DATE_RE.exec(source);
+      if (dm && dm.index === i) {
+        tokens.push({ type: 'date', value: dm[0], start: i });
+        i += dm[0].length;
+        continue;
+      }
     }
 
     // Radix literals (0x.., 0b.., 0o..) — before the decimal rule.

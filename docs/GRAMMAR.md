@@ -114,12 +114,27 @@ operator: `255 to hex` → `0xff`, `0b1010 to dec` → `10`. Aliases: `hex`/
 display attribute (arithmetic still happens in decimal, `0xFF + 1` = `256`); it
 requires a whole, unitless number.
 
+## Dates
+
+Dates are ISO literals (`2026-12-25`) plus the keyword `today`. They ride the
+units engine as points in time:
+
+- `date − date` → a duration in **days** (`2026-12-25 - today`, convert with
+  `in weeks`).
+- `date ± duration` → a date. Fixed durations shift by that many days
+  (`today + 3 weeks`); whole **months**/**years** apply calendar arithmetic with
+  end-of-month clamping (`2026-01-31 + 1 month` → `2026-02-28`).
+- Left-to-right, so `date + 1 month + 5 days` adds the month (calendar) then the
+  days. Adding two dates, or a bare number, is an error.
+- Durations combine by juxtaposition (`2h 30min`) or `+`; minutes are `min`.
+
 ## Lexical grammar (tokens)
 
 ```ebnf
 NUMBER = RADIX
        | ( DIGIT+ "."? DIGIT* | "." DIGIT+ ) ( ("e"|"E") ("+"|"-")? DIGIT+ )? ;
 RADIX  = "0x" HEXDIGIT+ | "0b" ("0"|"1")+ | "0o" OCTDIGIT+ ;  (* 0xFF 0b1010 0o777 *)
+DATE   = DIGIT{4} "-" DIGIT{2} "-" DIGIT{2} ;      (* ISO date, 2026-12-25 *)
 REF    = "$" ( IDENT | DIGIT+ ) ;      (* $3 references by id; $name by name *)
 ".."   = range operator (between two REFs, in a function argument) ;
 IDENT  = ( LETTER | "_" ) ( LETTER | DIGIT | "_" )* ;

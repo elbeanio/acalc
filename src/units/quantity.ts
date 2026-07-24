@@ -1,5 +1,7 @@
 import { Num } from '../num/index.ts';
+import { addMonths, formatDay, MONTH_SECONDS } from './datetime.ts';
 import {
+  dim,
   DIMENSIONLESS,
   dimDiv,
   dimEqual,
@@ -11,6 +13,13 @@ import {
   isSensibleDimension,
   type Dimension,
 } from './dimensions.ts';
+
+/** The time dimension, for recognising durations in date arithmetic. */
+const TIME = dim({ time: 1 });
+const SECONDS_PER_DAY = Num.of('86400');
+
+/** A value that is a point in time rather than an amount (currently: a date). */
+export type Temporal = 'date';
 
 /** One unit in a display label, e.g. `{ symbol: 'm', exp: 2 }` → m². */
 export interface UnitTerm {
@@ -47,7 +56,23 @@ export class Quantity {
     readonly display: DisplayUnit | null,
     /** When set, an integer displayed in this base (hex/bin/oct). */
     readonly radix: DisplayRadix | null = null,
+    /** When set, this is a point in time (a date), not an amount. */
+    readonly temporal: Temporal | null = null,
   ) {}
+
+  /** A date, stored as a day number (days since the Unix epoch). */
+  static date(dayNumber: Num): Quantity {
+    return new Quantity(dayNumber, DIMENSIONLESS, null, null, 'date');
+  }
+
+  /** A duration of `days`, displayed in days (result of date − date). */
+  private static durationInDays(days: Num): Quantity {
+    return new Quantity(days.mul(SECONDS_PER_DAY), TIME, {
+      terms: [{ symbol: 'day', exp: 1 }],
+      factor: SECONDS_PER_DAY,
+      offset: Num.ZERO,
+    });
+  }
 
   /** Tag this value to display in the given base (null = plain decimal). */
   inRadix(radix: DisplayRadix | null): Quantity {
@@ -75,10 +100,12 @@ export class Quantity {
 
   /** The scalar value if dimensionless (angle → radians), else null. */
   asScalar(): Num | null {
+    if (this.temporal) return null; // a date is not a plain number
     return this.isDimensionless() ? this.base : null;
   }
 
   add(other: Quantity): Quantity {
+    if (this.temporal || other.temporal) return this.temporalCombine(other, 1);
     this.requireSameDimension(other, 'add');
     return new Quantity(
       this.base.add(other.base),
@@ -88,12 +115,30 @@ export class Quantity {
   }
 
   sub(other: Quantity): Quantity {
+    if (this.temporal || other.temporal) return this.temporalCombine(other, -1);
     this.requireSameDimension(other, 'subtract');
     return new Quantity(
       this.base.sub(other.base),
       this.dimension,
       this.display ?? other.display,
     );
+  }
+
+  /** Date arithmetic: date−date → duration, date±duration → date. */
+  private temporalCombine(other: Quantity, sign: number): Quantity {
+    const isDuration = (q: Quantity) => !q.temporal && dimEqual(q.dimension, TIME);
+    if (this.temporal === 'date' && other.temporal === 'date') {
+      if (sign > 0) throw new UnitError('Cannot add two dates');
+      return Quantity.durationInDays(this.base.sub(other.base));
+    }
+    if (this.temporal === 'date' && isDuration(other)) {
+      return Quantity.date(shiftDate(this.base, other.base, sign));
+    }
+    if (isDuration(this) && other.temporal === 'date') {
+      if (sign < 0) throw new UnitError('Cannot subtract a date from a duration');
+      return Quantity.date(shiftDate(other.base, this.base, 1));
+    }
+    throw new UnitError('That date operation is not supported');
   }
 
   neg(): Quantity {
@@ -174,11 +219,13 @@ export class Quantity {
   }
 
   toDisplay(significantDigits?: number): string {
+    if (this.temporal === 'date') return formatDay(this.base.toNumber());
     if (this.radix) return this.base.toRadix(this.radix);
     return this.format((n) => n.toDisplay(significantDigits));
   }
 
   toString(): string {
+    if (this.temporal === 'date') return formatDay(this.base.toNumber());
     if (this.radix) return this.base.toRadix(this.radix);
     return this.format((n) => n.toString());
   }
@@ -216,6 +263,20 @@ export class UnitError extends Error {
     super(message);
     this.name = 'UnitError';
   }
+}
+
+/**
+ * Shift a date (day number) by a signed duration in seconds. A whole number of
+ * average months applies calendar arithmetic (with end-of-month clamping); any
+ * other duration is added as (fractional) days.
+ */
+function shiftDate(dayNumber: Num, seconds: Num, sign: number): Num {
+  const signedSeconds = seconds.mul(Num.of(String(sign)));
+  const months = signedSeconds.toNumber() / MONTH_SECONDS;
+  if (months !== 0 && Number.isInteger(months)) {
+    return Num.of(String(addMonths(dayNumber.toNumber(), months)));
+  }
+  return dayNumber.add(signedSeconds.div(SECONDS_PER_DAY));
 }
 
 /** Reject nonsense dimensions like byte² or money² (see isSensibleDimension). */

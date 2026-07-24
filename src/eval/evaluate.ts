@@ -1,6 +1,7 @@
 import type { Node, RefTarget } from '../lang/index.ts';
 import { Num } from '../num/index.ts';
 import { Quantity, lookupUnit } from '../units/index.ts';
+import { parseISODate, todayDay } from '../units/datetime.ts';
 import { EvalError } from './errors.ts';
 import { applyFunction, CONSTANTS } from './functions.ts';
 
@@ -26,21 +27,24 @@ const noRanges: RangeResolver = () => {
 interface Ctx {
   readonly resolve: RefResolver;
   readonly resolveRange: RangeResolver;
+  /** Current time in ms, for `today` / `now`. */
+  readonly nowMs: number;
 }
 
 const HUNDREDTH = Quantity.scalar(Num.of('0.01'));
 
 /**
  * Evaluate an AST to a {@link Quantity}. References are resolved through
- * `resolve`; ranges (only valid as function arguments) through `resolveRange`.
- * Throws {@link EvalError} on any evaluation failure.
+ * `resolve`; ranges (only valid as function arguments) through `resolveRange`;
+ * `today`/`now` read from `nowMs`. Throws {@link EvalError} on any failure.
  */
 export function evaluate(
   node: Node,
   resolve: RefResolver,
   resolveRange: RangeResolver = noRanges,
+  nowMs: number = Date.now(),
 ): Quantity {
-  return evalNode(node, { resolve, resolveRange });
+  return evalNode(node, { resolve, resolveRange, nowMs });
 }
 
 function evalNode(node: Node, ctx: Ctx): Quantity {
@@ -48,10 +52,19 @@ function evalNode(node: Node, ctx: Ctx): Quantity {
     case 'number':
       return Quantity.scalar(Num.of(node.value));
 
+    case 'date': {
+      const day = parseISODate(node.value);
+      if (day === null) throw new EvalError(`"${node.value}" is not a valid date`);
+      return Quantity.date(Num.of(String(day)));
+    }
+
     case 'ref':
       return ctx.resolve(node.target);
 
     case 'identifier': {
+      if (node.name === 'today') {
+        return Quantity.date(Num.of(String(todayDay(ctx.nowMs))));
+      }
       const constant = CONSTANTS[node.name];
       if (!constant) {
         throw new EvalError(`Unknown identifier "${node.name}"`);

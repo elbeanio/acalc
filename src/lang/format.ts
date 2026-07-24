@@ -72,6 +72,8 @@ function renderInner(node: Node): string {
   switch (node.type) {
     case 'number':
       return node.value;
+    case 'date':
+      return node.value;
     case 'identifier':
       return node.name;
     case 'ref':

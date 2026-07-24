@@ -8,6 +8,8 @@ function sexpr(node: Node): string {
   switch (node.type) {
     case 'number':
       return node.value;
+    case 'date':
+      return `(date ${node.value})`;
     case 'identifier':
       return node.name;
     case 'ref':
@@ -145,6 +147,17 @@ describe('parser: compound quantities (juxtaposition sums)', () => {
 
   it('does not merge a plain trailing number', () => {
     expect(() => parse('2h 30')).toThrow(ParseError);
+  });
+});
+
+describe('parser: dates', () => {
+  it('parses an ISO date literal', () => {
+    expect(sx('2026-12-25')).toBe('(date 2026-12-25)');
+    expect(sx('2026-12-25 - today')).toBe('(- (date 2026-12-25) today)');
+  });
+
+  it('still subtracts numbers when not a full YYYY-MM-DD', () => {
+    expect(sx('2026 - 12 - 25')).toBe('(- (- 2026 12) 25)');
   });
 });
 
