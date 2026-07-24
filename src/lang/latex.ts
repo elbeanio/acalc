@@ -95,6 +95,10 @@ function renderInner(node: Node): string {
     case 'call':
       return renderCall(node);
 
+    case 'range':
+      // Two reference pills joined by `..`, matching the ref styling.
+      return `\\htmlClass{acalc-ref}{${node.from}}\\mathbin{..}\\htmlClass{acalc-ref}{${node.to}}`;
+
     case 'unit':
       return `\\text{${escapeText(node.name)}}`;
 

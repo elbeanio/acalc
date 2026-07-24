@@ -229,19 +229,34 @@ class Parser {
     return negate ? { type: 'unary', op: '-', operand: number } : number;
   }
 
-  // "(" ( expression ("," expression)* )? ")"
+  // "(" ( argument ("," argument)* )? ")"
   private parseArguments(): Node[] {
     this.expect('lparen', '(');
     const args: Node[] = [];
     if (this.peek().type !== 'rparen') {
-      args.push(this.parseExpression());
+      args.push(this.parseArgument());
       while (this.peek().type === 'comma') {
         this.advance();
-        args.push(this.parseExpression());
+        args.push(this.parseArgument());
       }
     }
     this.expect('rparen', ')');
     return args;
+  }
+
+  // argument = expression | ref ".." ref   (a range like $1..$5, ids only)
+  private parseArgument(): Node {
+    const expr = this.parseExpression();
+    if (this.peek().type !== 'dotdot') return expr;
+    const at = this.peek().start;
+    this.advance();
+    const upper = this.parseExpression();
+    const from = asIdRef(expr);
+    const to = asIdRef(upper);
+    if (from === null || to === null) {
+      throw new ParseError('A range must be between two row ids, e.g. $1..$5', at);
+    }
+    return { type: 'range', from, to };
   }
 
   /** True when the next token begins a unit (for juxtaposition). */
@@ -282,6 +297,11 @@ class Parser {
     }
     this.advance();
   }
+}
+
+/** The row id if `node` is a `$id` reference, else null (names have no order). */
+function asIdRef(node: Node): number | null {
+  return node.type === 'ref' && node.target.kind === 'id' ? node.target.id : null;
 }
 
 function toRefTarget(body: string): RefTarget {

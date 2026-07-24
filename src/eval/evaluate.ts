@@ -10,19 +10,46 @@ import { applyFunction, CONSTANTS } from './functions.ts';
  */
 export type RefResolver = (target: RefTarget) => Quantity;
 
+/**
+ * Expands a range (`$from..$to`) to the values of the existing rows it spans,
+ * for aggregate functions like `sum`. Provided by the stack layer, which knows
+ * which ids exist.
+ */
+export type RangeResolver = (from: number, to: number) => Quantity[];
+
+const noRanges: RangeResolver = () => {
+  throw new EvalError(
+    'A range like $1..$5 can only be used inside a function, e.g. sum($1..$5)',
+  );
+};
+
+interface Ctx {
+  readonly resolve: RefResolver;
+  readonly resolveRange: RangeResolver;
+}
+
 const HUNDREDTH = Quantity.scalar(Num.of('0.01'));
 
 /**
  * Evaluate an AST to a {@link Quantity}. References are resolved through
- * `resolve`. Throws {@link EvalError} on any evaluation failure.
+ * `resolve`; ranges (only valid as function arguments) through `resolveRange`.
+ * Throws {@link EvalError} on any evaluation failure.
  */
-export function evaluate(node: Node, resolve: RefResolver): Quantity {
+export function evaluate(
+  node: Node,
+  resolve: RefResolver,
+  resolveRange: RangeResolver = noRanges,
+): Quantity {
+  return evalNode(node, { resolve, resolveRange });
+}
+
+function evalNode(node: Node, ctx: Ctx): Quantity {
   switch (node.type) {
     case 'number':
       return Quantity.scalar(Num.of(node.value));
 
     case 'ref':
-      return resolve(node.target);
+      return ctx.resolve(node.target);
 
     case 'identifier': {
       const constant = CONSTANTS[node.name];
@@ -39,42 +66,54 @@ export function evaluate(node: Node, resolve: RefResolver): Quantity {
     }
 
     case 'unary': {
-      const operand = evaluate(node.operand, resolve);
+      const operand = evalNode(node.operand, ctx);
       return node.op === '-' ? operand.neg() : operand;
     }
 
     case 'percent':
-      return evaluate(node.operand, resolve).mul(HUNDREDTH);
+      return evalNode(node.operand, ctx).mul(HUNDREDTH);
 
     case 'factorial':
       return Quantity.scalar(
-        factorial(requireScalar(evaluate(node.operand, resolve), 'factorial')),
+        factorial(requireScalar(evalNode(node.operand, ctx), 'factorial')),
       );
 
     case 'quantity':
-      return evaluateQuantity(node, resolve);
+      return evaluateQuantity(node, ctx);
 
     case 'convert': {
-      const value = evaluate(node.value, resolve);
-      const target = evaluate(node.unit, resolve);
+      const value = evalNode(node.value, ctx);
+      const target = evalNode(node.unit, ctx);
       return value.convertTo(target);
     }
 
     case 'binary':
-      return evaluateBinary(node, resolve);
+      return evaluateBinary(node, ctx);
 
     case 'call': {
-      const args = node.args.map((arg) => evaluate(arg, resolve));
+      // A range argument expands in place into the values it spans, so
+      // aggregates like sum/avg are just variadic functions.
+      const args = node.args.flatMap((arg) =>
+        arg.type === 'range'
+          ? ctx.resolveRange(arg.from, arg.to)
+          : [evalNode(arg, ctx)],
+      );
       return finite(applyFunction(node.name, args), `"${node.name}"`);
     }
+
+    case 'range':
+      // Only reachable when a range is used outside a call argument.
+      throw new EvalError(
+        'A range like $1..$5 can only be used inside a function, e.g. sum($1..$5)',
+      );
   }
 }
 
 function evaluateQuantity(
   node: Extract<Node, { type: 'quantity' }>,
-  resolve: RefResolver,
+  ctx: Ctx,
 ): Quantity {
-  const value = requireScalar(evaluate(node.value, resolve), 'a quantity');
+  const value = requireScalar(evalNode(node.value, ctx), 'a quantity');
   // A single unit uses fromUnit so affine units (°C/°F) apply their offset.
   if (node.unit.type === 'unit') {
     const unit = lookupUnit(node.unit.name);
@@ -82,15 +121,15 @@ function evaluateQuantity(
     return Quantity.fromUnit(value, unit);
   }
   // A compound unit (km/h, m^2) is a plain multiplication.
-  return Quantity.scalar(value).mul(evaluate(node.unit, resolve));
+  return Quantity.scalar(value).mul(evalNode(node.unit, ctx));
 }
 
 function evaluateBinary(
   node: Extract<Node, { type: 'binary' }>,
-  resolve: RefResolver,
+  ctx: Ctx,
 ): Quantity {
-  const left = evaluate(node.left, resolve);
-  const right = evaluate(node.right, resolve);
+  const left = evalNode(node.left, ctx);
+  const right = evalNode(node.right, ctx);
   switch (node.op) {
     case '+':
       return left.add(right);

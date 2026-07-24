@@ -90,6 +90,8 @@ function renderInner(node: Node): string {
     }
     case 'call':
       return `${node.name}(${node.args.map((a) => render(a, 0)).join(', ')})`;
+    case 'range':
+      return `$${node.from}..$${node.to}`;
     case 'unit':
       return node.name;
     case 'quantity': {

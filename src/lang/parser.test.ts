@@ -30,6 +30,8 @@ function sexpr(node: Node): string {
       return `(qty ${sexpr(node.value)} ${sexpr(node.unit)})`;
     case 'convert':
       return `(conv ${sexpr(node.value)} ${sexpr(node.unit)})`;
+    case 'range':
+      return `(range ${node.from} ${node.to})`;
   }
 }
 
@@ -125,6 +127,22 @@ describe('parser: units', () => {
 
   it('a unit after a power attaches to the whole power', () => {
     expect(sx('2^40 bytes')).toBe('(qty (^ 2 40) bytes)');
+  });
+});
+
+describe('parser: ranges (function arguments only)', () => {
+  it('parses a range of row ids', () => {
+    expect(sx('sum($1..$5)')).toBe('(sum (range 1 5))');
+    expect(sx('avg($2..$4, 10)')).toBe('(avg (range 2 4) 10)');
+  });
+
+  it('rejects a range used outside a call', () => {
+    expect(() => parse('$1..$5')).toThrow(ParseError);
+  });
+
+  it('rejects a range whose endpoints are not bare row ids', () => {
+    expect(() => parse('sum($total..$5)')).toThrow(ParseError); // name has no order
+    expect(() => parse('sum($1..$5 + 1)')).toThrow(ParseError); // upper is an expression
   });
 });
 

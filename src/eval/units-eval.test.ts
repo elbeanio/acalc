@@ -49,6 +49,25 @@ describe('units: quantities and arithmetic', () => {
   });
 });
 
+describe('aggregate functions', () => {
+  it('sum, product, avg, mean, count over plain args', () => {
+    expect(run('sum(1, 2, 3)')).toBe('6');
+    expect(run('product(2, 3, 4)')).toBe('24');
+    expect(run('avg(2, 4, 6)')).toBe('4');
+    expect(run('mean(10, 20)')).toBe('15');
+    expect(run('count(5, 5, 5)')).toBe('3');
+  });
+
+  it('aggregates carry a shared unit', () => {
+    expect(run('sum(5 km, 300 m)')).toBe('5.3km');
+    expect(run('avg(10 kg, 20 kg)')).toBe('15kg');
+  });
+
+  it('rejects aggregating incompatible units', () => {
+    expect(() => run('sum(5 km, 3 kg)')).toThrow();
+  });
+});
+
 describe('units: conversion (to / in)', () => {
   it('length', () => {
     expect(run('5 km in m')).toBe('5000m');

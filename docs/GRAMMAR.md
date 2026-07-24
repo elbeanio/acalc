@@ -33,8 +33,18 @@ primary      = NUMBER
              | IDENT "(" arguments? ")"                 (* function call *)
              | "(" expression ")" ;
 
-arguments    = expression ( "," expression )* ;
+arguments    = argument ( "," argument )* ;
+argument     = expression | range ;
+range        = REF ".." REF ;   (* row-id range for aggregates, e.g. $1..$5 *)
 ```
+
+A **range** `$1..$5` is only valid as a function argument. Its endpoints must be
+bare row ids (`$1`, `$5`), not names or expressions, since names have no order.
+It expands to the values of the existing rows whose id lies in `[1, 5]`
+inclusive — **gaps are skipped** (a deleted id in the range is not a dangling
+reference), and a range that spans its own row is a circular reference. Ranges
+feed the variadic aggregates: `sum`, `product`, `avg`/`mean`, `count`, `min`,
+`max` — e.g. `sum($1..$5)`, `avg($2..$8)`.
 
 ### Precedence, lowest to highest
 
@@ -96,6 +106,7 @@ unitFactor = ( UNIT | "(" unitExpr ")" ) ( "^" NUMBER )? ;
 ```ebnf
 NUMBER = ( DIGIT+ "."? DIGIT* | "." DIGIT+ ) ( ("e"|"E") ("+"|"-")? DIGIT+ )? ;
 REF    = "$" ( IDENT | DIGIT+ ) ;      (* $3 references by id; $name by name *)
+".."   = range operator (between two REFs, in a function argument) ;
 IDENT  = ( LETTER | "_" ) ( LETTER | DIGIT | "_" )* ;
 DIGIT  = "0".."9" ;
 LETTER = "a".."z" | "A".."Z" ;
@@ -110,7 +121,8 @@ Bare identifiers are resolved at evaluation time:
 
 - Constants: `pi`, `e`.
 - Function names when followed by `(`: `sin`, `cos`, `tan`, `ln`, `log`, `sqrt`,
-  `exp`, `abs`, `round`, `min`, `max`, … (see the evaluator's function table).
+  `exp`, `abs`, `round`, `min`, `max`, and the aggregates `sum`, `product`,
+  `avg`/`mean`, `count`, … (see the evaluator's function table).
 
 An identifier that resolves to neither a known constant nor a called function is
 an evaluation error.

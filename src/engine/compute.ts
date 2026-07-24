@@ -1,7 +1,7 @@
 import { EvalError, evaluate } from '../eval/index.ts';
 import { parse, type ParseError } from '../lang/index.ts';
 import type { Node, RefTarget } from '../lang/index.ts';
-import { extractRefTargets } from './dependencies.ts';
+import { extractRanges, extractRefTargets } from './dependencies.ts';
 import type { Row, RowError, RowResult } from './types.ts';
 
 interface Analysis {
@@ -79,6 +79,13 @@ export function computeStack(rows: readonly Row[]): Map<number, RowResult> {
         deps.add(id);
       }
     }
+    // A range depends on every existing row it spans; gaps are skipped silently
+    // (a missing id in a range is not a dangling reference).
+    for (const { from, to } of extractRanges(ast)) {
+      const lo = Math.min(from, to);
+      const hi = Math.max(from, to);
+      for (const id of existingIds) if (id >= lo && id <= hi) deps.add(id);
+    }
     analyses.set(r.id, {
       ast,
       parseError: null,
@@ -143,14 +150,29 @@ export function computeStack(rows: readonly Row[]): Map<number, RowResult> {
     }
 
     try {
-      const value = evaluate(a.ast!, (target) => {
-        const depId = resolveId(target)!;
-        const dep = results.get(depId);
-        if (dep?.status !== 'ok') {
-          throw new EvalError('#ref!', 'ref');
-        }
-        return dep.value;
-      });
+      const value = evaluate(
+        a.ast!,
+        (target) => {
+          const depId = resolveId(target)!;
+          const dep = results.get(depId);
+          if (dep?.status !== 'ok') {
+            throw new EvalError('#ref!', 'ref');
+          }
+          return dep.value;
+        },
+        (from, to) => {
+          // Expand to the existing rows the range spans, in row order.
+          const lo = Math.min(from, to);
+          const hi = Math.max(from, to);
+          return rows
+            .filter((r) => r.id >= lo && r.id <= hi)
+            .map((r) => {
+              const dep = results.get(r.id);
+              if (dep?.status !== 'ok') throw new EvalError('#ref!', 'ref');
+              return dep.value;
+            });
+        },
+      );
       results.set(id, { status: 'ok', value });
     } catch (err) {
       const ee = err as EvalError;

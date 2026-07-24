@@ -12,6 +12,7 @@ export type TokenType =
   | 'lparen'
   | 'rparen'
   | 'comma'
+  | 'dotdot' // `..` range operator, e.g. $1..$5
   | 'eof';
 
 export interface Token {

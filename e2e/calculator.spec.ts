@@ -487,6 +487,24 @@ test('a corrupt share link is ignored, not fatal', async ({ browser }) => {
   await recipient.close();
 });
 
+test('aggregates a range of rows and ripples on a member edit', async ({
+  page,
+}) => {
+  await typeInRow(page, 0, '120');
+  await page.keyboard.press('Enter');
+  await page.keyboard.type('80');
+  await page.keyboard.press('Enter');
+  await page.keyboard.type('55');
+  await page.keyboard.press('Enter');
+  await page.keyboard.type('sum($1..$3)');
+  await expect(result(page, 3)).toHaveAttribute('data-value', '255');
+
+  await editRow(page, 0);
+  await clearFocusedRow(page);
+  await page.keyboard.type('220');
+  await expect(result(page, 3)).toHaveAttribute('data-value', '355'); // 220+80+55
+});
+
 test('exports the stack to a downloadable file', async ({ page }) => {
   await typeInRow(page, 0, '3 + 3'); // $1 = 6
   await page.keyboard.press('Enter');

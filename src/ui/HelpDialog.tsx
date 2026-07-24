@@ -39,6 +39,8 @@ const SECTIONS: Section[] = [
       { syntax: 'round(x, dp?)', meaning: 'round (to dp places)', example: 'round(3.14159, 2) = 3.14' },
       { syntax: 'floor(x), ceil(x)', meaning: 'round down / up', example: 'floor(3.7) = 3' },
       { syntax: 'min(…), max(…)', meaning: 'smallest / largest', example: 'max(3, 1, 2) = 3' },
+      { syntax: 'sum(…), product(…)', meaning: 'add / multiply all', example: 'sum(2, 3, 4) = 9' },
+      { syntax: 'avg(…), count(…)', meaning: 'mean / how many', example: 'avg(2, 4, 6) = 4' },
     ],
   },
   {
@@ -54,6 +56,7 @@ const SECTIONS: Section[] = [
       { syntax: '$1, $2, …', meaning: 'the result of another row, by its number', example: '$1 * 10' },
       { syntax: '$', meaning: 'opens a picker of every row and its value' },
       { syntax: '$name', meaning: 'reference a named row', example: '$total * 1.2' },
+      { syntax: '$1..$5', meaning: 'a range of rows, for aggregates', example: 'sum($1..$5)' },
       { syntax: 'name box', meaning: 'the box on the left names a row, so you can use $name' },
     ],
   },

@@ -128,6 +128,65 @@ describe('computeStack: error propagation', () => {
   });
 });
 
+describe('computeStack: ranges and aggregates', () => {
+  const numbers = (): Row[] => [
+    { id: 1, source: '120' },
+    { id: 2, source: '80' },
+    { id: 3, source: '55' },
+  ];
+
+  it('sums a range of rows', () => {
+    const results = compute([...numbers(), { id: 4, source: 'sum($1..$3)' }]);
+    expect(val(results, 4)).toBe('255');
+  });
+
+  it('avg / count / min / max over a range', () => {
+    const withAgg = (src: string) => compute([...numbers(), { id: 4, source: src }]);
+    expect(val(withAgg('avg($1..$3)'), 4)).toBe('85');
+    expect(val(withAgg('count($1..$3)'), 4)).toBe('3');
+    expect(val(withAgg('min($1..$3)'), 4)).toBe('55');
+    expect(val(withAgg('max($1..$3)'), 4)).toBe('120');
+  });
+
+  it('skips gaps — a deleted row inside the range is not a dangling ref', () => {
+    const results = compute([
+      { id: 1, source: '120' },
+      { id: 3, source: '55' }, // id 2 deleted
+      { id: 4, source: 'sum($1..$3)' },
+    ]);
+    expect(val(results, 4)).toBe('175'); // 120 + 55
+  });
+
+  it('ripples a member edit through the aggregate (dependency edge exists)', () => {
+    const mk = (first: string) =>
+      compute([
+        { id: 1, source: first },
+        { id: 2, source: '50' },
+        { id: 3, source: 'sum($1..$2)' },
+      ]);
+    expect(val(mk('100'), 3)).toBe('150');
+    expect(val(mk('200'), 3)).toBe('250');
+  });
+
+  it('blocks the aggregate if a member row errors', () => {
+    const results = compute([
+      { id: 1, source: '1 / 0' },
+      { id: 2, source: '5' },
+      { id: 3, source: 'sum($1..$2)' },
+    ]);
+    expect(errKind(results, 3)).toBe('blocked');
+  });
+
+  it('a range that includes the aggregating row is a cycle', () => {
+    const results = compute([
+      { id: 1, source: '10' },
+      { id: 2, source: 'sum($1..$3)' }, // id 2 is within 1..3 → self-reference
+      { id: 3, source: '30' },
+    ]);
+    expect(errKind(results, 2)).toBe('cycle');
+  });
+});
+
 describe('computeStack: cycle detection', () => {
   it('detects a two-row cycle', () => {
     const results = compute([

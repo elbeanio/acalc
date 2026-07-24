@@ -20,6 +20,7 @@ export type Node =
   | { readonly type: 'percent'; readonly operand: Node } // postfix %
   | { readonly type: 'factorial'; readonly operand: Node } // postfix !
   | { readonly type: 'call'; readonly name: string; readonly args: Node[] }
+  | { readonly type: 'range'; readonly from: number; readonly to: number } // $1..$5 (row ids)
   | { readonly type: 'unit'; readonly name: string } // a bare unit, e.g. km
   | { readonly type: 'quantity'; readonly value: Node; readonly unit: Node } // 5 km
   | { readonly type: 'convert'; readonly value: Node; readonly unit: Node }; // x to km

@@ -38,6 +38,13 @@ export function tokenize(source: string): Token[] {
       continue;
     }
 
+    // Range operator `..` (before number/`.` handling; e.g. $1..$5).
+    if (ch === '.' && source[i + 1] === '.') {
+      tokens.push({ type: 'dotdot', value: '..', start: i });
+      i += 2;
+      continue;
+    }
+
     // Numbers (also handles a leading-dot form like `.5`).
     if ((ch >= '0' && ch <= '9') || (ch === '.' && isDigit(source[i + 1]))) {
       NUMBER_RE.lastIndex = i;

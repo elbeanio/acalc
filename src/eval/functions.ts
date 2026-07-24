@@ -62,7 +62,19 @@ export const FUNCTIONS: Record<string, FunctionDef> = {
   },
   min: { minArgs: 1, apply: (args) => extreme(args, 'min') },
   max: { minArgs: 1, apply: (args) => extreme(args, 'max') },
+  // Aggregates — variadic, so a range ($1..$5) expands straight into them.
+  sum: { minArgs: 1, apply: (args) => args.reduce((a, b) => a.add(b)) },
+  product: { minArgs: 1, apply: (args) => args.reduce((a, b) => a.mul(b)) },
+  avg: { minArgs: 1, apply: (args) => mean(args) },
+  mean: { minArgs: 1, apply: (args) => mean(args) },
+  count: { minArgs: 1, apply: (args) => Quantity.scalar(Num.of(String(args.length))) },
 };
+
+/** Arithmetic mean, keeping the (shared) unit of the inputs. */
+function mean(args: Quantity[]): Quantity {
+  const total = args.reduce((a, b) => a.add(b));
+  return total.div(Quantity.scalar(Num.of(String(args.length))));
+}
 
 /** Apply a function by name, validating that it exists and the arity matches. */
 export function applyFunction(name: string, args: Quantity[]): Quantity {
