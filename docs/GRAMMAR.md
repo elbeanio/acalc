@@ -90,6 +90,8 @@ unitFactor = ( UNIT | "(" unitExpr ")" ) ( "^" NUMBER )? ;
   are `min`).
 - `to` / `in` convert: `50 mph in km/h`, `20°C to °F`, `1 GiB in MB`.
 - `+` and `−` require the same dimension; `*` `/` combine dimensions.
+- **Unit juxtaposition binds tighter than `/`**: `1/2 rad` parses as `1/(2 rad)`,
+  not `(1/2) rad`. Parenthesise if you mean the latter.
 - **Families:** length, mass, time (+ derived speed/area/volume), temperature
   (°C/°F/K, affine), digital storage (KB…/KiB…), angles (deg/rad — trig accepts
   degrees), and currency (£/€/¥ + ISO codes, **static approximate rates**).

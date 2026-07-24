@@ -72,6 +72,7 @@ const SECTIONS: Section[] = [
       { syntax: 'angles', meaning: 'deg, rad — trig takes degrees', example: 'sin(90 deg) = 1' },
       { syntax: 'currency (postfix)', meaning: 'GBP, USD, EUR… (static rates)', example: '40 USD in GBP = 31.6GBP' },
       { syntax: 'no $ prefix', meaning: '$ is the reference sigil — write 40 USD, not $40' },
+      { syntax: '(1/2) rad', meaning: 'a unit binds tighter than ÷, so 1/2 rad = 1/(2 rad)', example: 'parenthesise' },
     ],
   },
   {

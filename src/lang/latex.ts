@@ -108,8 +108,14 @@ function renderInner(node: Node): string {
     case 'unit':
       return `\\text{${escapeText(node.name)}}`;
 
-    case 'quantity':
-      return `${render(node.value, PREC.postfix)}\\,${renderUnitLatex(node.unit)}`;
+    case 'quantity': {
+      const value = render(node.value, PREC.postfix);
+      const unit = renderUnitLatex(node.unit);
+      // Degrees sit tight against the number (100°C, 45°); other units get a
+      // thin space by convention (5 km).
+      const tight = node.unit.type === 'unit' && node.unit.name.startsWith('°');
+      return `${value}${tight ? '' : '\\,'}${unit}`;
+    }
 
     case 'convert':
       return `${render(node.value, 0)} \\to ${renderUnitLatex(node.unit)}`;
@@ -121,8 +127,15 @@ function renderInner(node: Node): string {
 
 function renderUnitLatex(node: Node): string {
   switch (node.type) {
-    case 'unit':
-      return `\\text{${escapeText(node.name)}}`;
+    case 'unit': {
+      // Render °C / °F / ° with a proper raised degree, like result units.
+      if (node.name.startsWith('°')) {
+        return node.name.length > 1
+          ? `{}^{\\circ}\\mathrm{${escapeText(node.name.slice(1))}}`
+          : '{}^{\\circ}';
+      }
+      return `\\mathrm{${escapeText(node.name)}}`;
+    }
     case 'number':
       return node.value;
     case 'unary':

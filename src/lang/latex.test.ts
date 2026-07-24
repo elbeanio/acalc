@@ -47,6 +47,16 @@ describe('astToLatex', () => {
     expect(tex('$net_total')).toBe('\\htmlClass{acalc-var}{\\mathit{net\\_total}}');
   });
 
+  it('renders units in mathrm, with a thin space (degrees sit tight)', () => {
+    expect(tex('5 km')).toBe('5\\,\\mathrm{km}');
+    expect(tex('100°C')).toBe('100{}^{\\circ}\\mathrm{C}'); // tight + raised degree
+    expect(tex('90 deg')).toBe('90\\,\\mathrm{deg}');
+  });
+
+  it('renders a date/time literal as text', () => {
+    expect(tex('2026-12-25')).toBe('\\text{2026-12-25}');
+  });
+
   it('returns null for unparseable input', () => {
     expect(tex('1 +')).toBeNull();
   });
