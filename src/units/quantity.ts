@@ -21,6 +21,8 @@ import {
 
 /** The time dimension, for recognising durations in date arithmetic. */
 const TIME = dim({ time: 1 });
+/** The temperature dimension, for the affine-addition guard. */
+const TEMPERATURE = dim({ temperature: 1 });
 const SECONDS_PER_DAY = Num.of('86400');
 
 /** Spelled-out names for time-unit symbols, so durations read naturally. */
@@ -141,10 +143,26 @@ export class Quantity {
   add(other: Quantity): Quantity {
     if (this.temporal || other.temporal) return this.temporalCombine(other, 1);
     this.requireSameDimension(other, 'add');
+    // Two absolute temperatures (°C/°F) can't be added — it's an affine point,
+    // not an amount. (°C + a change in K is fine, as is a difference via −.)
+    if (this.isAbsoluteTemperature() && other.isAbsoluteTemperature()) {
+      throw new UnitError(
+        'Cannot add two temperatures — subtract for a difference, or add a change in K',
+      );
+    }
     return new Quantity(
       this.base.add(other.base),
       this.dimension,
       this.display ?? other.display,
+    );
+  }
+
+  /** True for an absolute temperature (°C/°F — a display with a non-zero offset). */
+  private isAbsoluteTemperature(): boolean {
+    return (
+      dimEqual(this.dimension, TEMPERATURE) &&
+      this.display !== null &&
+      !this.display.offset.isZero()
     );
   }
 

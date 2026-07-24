@@ -98,8 +98,9 @@ unitFactor = ( UNIT | "(" unitExpr ")" ) ( "^" NUMBER )? ;
   accepted as input but display as the ISO code). `$` is the reference sigil, so
   there is no `$40` prefix form; write `40 USD`.
 - Temperature accepts lowercase aliases: `20c in f` works (as do `°C`/`°F`).
-  It is affine: conversions are correct (`20c in f` = `68°F`), but adding two
-  temperatures adds absolute kelvin values.
+  It is affine: conversions are correct (`20c in f` = `68°F`). Adding two
+  absolute temperatures is rejected (subtract for a difference, or add a change
+  in `K`); `20°C + 5K` = `25°C` is fine.
 - Units render next to the number with no space (`5.3km`, `68°F`).
 - Currency, data and temperature are *amounts*: scale/add/convert and rates
   (`£/month`, `MB/s`) are fine, but a square (`byte²`, `money²`) is an error —

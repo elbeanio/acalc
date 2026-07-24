@@ -126,6 +126,13 @@ describe('units: conversion (to / in)', () => {
     expect(run('100 C to K')).toBe('373.15K');
   });
 
+  it('rejects adding two absolute temperatures, but allows intervals', () => {
+    expect(() => run('20°C + 5°C')).toThrow(/add two temperatures/);
+    expect(() => run('20c + 5c')).toThrow(/add two temperatures/);
+    expect(run('20°C + 5K')).toBe('25°C'); // adding a kelvin interval is fine
+    expect(run('5K + 3K')).toBe('8K');
+  });
+
   it('digital storage', () => {
     expect(run('1 GB in MB')).toBe('1000MB');
     expect(run('1 GiB in MB')).toBe('1073.741824MB');
