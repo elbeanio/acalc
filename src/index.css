@@ -90,6 +90,7 @@ body {
 
 /* --- help dialog --- */
 .help-dialog {
+  position: relative;
   border: 1px solid var(--border);
   border-radius: 12px;
   padding: 0;
@@ -111,12 +112,6 @@ body {
 }
 
 .help-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  position: sticky;
-  top: 0;
-  background: var(--bg);
   padding-bottom: 0.5rem;
 }
 
@@ -126,8 +121,12 @@ body {
 }
 
 .help-close {
+  position: absolute;
+  top: 0.8rem;
+  right: 0.9rem;
+  z-index: 1;
   border: none;
-  background: none;
+  background: var(--bg);
   color: var(--muted);
   font-size: 1.5rem;
   line-height: 1;

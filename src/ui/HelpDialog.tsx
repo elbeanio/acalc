@@ -138,17 +138,17 @@ export function HelpDialog({
         if (e.target === ref.current) onClose(); // click on the backdrop
       }}
     >
+      <button
+        className="help-close"
+        onClick={onClose}
+        aria-label="Close help"
+        title="Close"
+      >
+        ×
+      </button>
       <div className="help-inner">
         <div className="help-header">
           <h2>acalc cheat sheet</h2>
-          <button
-            className="help-close"
-            onClick={onClose}
-            aria-label="Close help"
-            title="Close"
-          >
-            ×
-          </button>
         </div>
         <section className="help-section help-lead">
           <h3>How it works</h3>
