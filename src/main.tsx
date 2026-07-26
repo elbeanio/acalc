@@ -19,3 +19,13 @@ createRoot(rootElement).render(
     </StoreProvider>
   </StrictMode>,
 );
+
+// Cloudflare Web Analytics — cookieless, no PII. Injected in production only so
+// local dev and e2e traffic don't pollute the stats. The token is public.
+if (import.meta.env.PROD) {
+  const beacon = document.createElement('script');
+  beacon.defer = true;
+  beacon.src = 'https://static.cloudflareinsights.com/beacon.min.js';
+  beacon.dataset.cfBeacon = '{"token": "0d01498688bf473e9d3fa7ad45a9dd97"}';
+  document.head.appendChild(beacon);
+}
