@@ -1,0 +1,4 @@
+User-agent: *
+Allow: /
+
+Sitemap: https://acalc.io/sitemap.xml
